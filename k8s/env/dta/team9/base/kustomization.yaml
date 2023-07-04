@@ -1,0 +1,51 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+  - ../../../../base
+resources:
+  - config-map.yaml
+vars:
+  - name: DOCKER_REGISTRY
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.docker_registry
+  - name: ENVIRONMENT
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.environment_name
+  - name: TAG
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.service_tag
+  - name: CONFIG_SERVER_TAG
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.config_server_tag
+  - name: SECURITY_TARGET
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.security_target
+  - name: DOCKER_TAG
+    objref:
+      kind: ConfigMap
+      name: "providers-kustomize"
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.docker_tag
+patchesStrategicMerge:
+  - team-profile.yaml

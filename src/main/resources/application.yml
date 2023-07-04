@@ -1,0 +1,2282 @@
+server:
+  servlet:
+    context-path: /providers
+  tomcat:
+    max-threads: 200
+  port: 8080
+spring:
+  profiles:
+    include: truststore
+  jackson:
+    deserialization:
+      adjust-dates-to-context-time-zone: false
+    serialization:
+      write-dates-as-timestamps: false
+  # Disable HTTP client header propagation, as we do not want to send all Sleuth propagated headers to remote banks
+  sleuth:
+    web:
+      client:
+        enabled: false
+  cache:
+    type: caffeine
+    cache-names: mutualTLSCache
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=30d
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, metrics, prometheus
+      base-path: /actuator
+  server:
+    port: 8444
+    ssl:
+      enabled: true
+      key-store: /vault/secrets/keystore.p12
+      key-alias: keystore
+      key-store-password: dontchangeit
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState, cassandra, kafka
+yolt:
+  commons:
+    disableMigrationHelpers: false
+    error-handling:
+      prefix: PR
+  vault:
+    enabled: true
+    cassandra:
+      enabled: true
+    authentication:
+      role: providers
+      kubernetes-path: "${yolt.deployment.environment}/k8s/eks/pods/${yolt.deployment.namespace}"
+      service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    secret:
+      enabled: true
+  providers:
+    rddmask:
+      max-rdd-body-to-be-masked-in-bytes: 3000
+      blacklisted-terms: access_token,accessToken,refresh_token,refreshToken,username,password,clientSecret,client_secret,scaAuthenticationData
+    transactions:
+      limiter:
+        log:
+          enabled: false
+    connection:
+      maxTotal: 100 # Maximum number of active connections in pool at the same same time for given RestTemplate cache value
+      maxPerRoute: 10 # Maximum number of active connections in pool per route at the same same time for given RestTemplate cache value
+      validateAfterInactivityInMillis: 1000 # 1 second
+      requestTimeoutInMillis: 60000 # 1 minute
+      connectTimeoutInMillis: 60000 # 1 minute
+      socketTimeoutInMillis: 60000 # 1 minute
+    vaultMigrationEncryptionKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu+RralOq5fusTDW7jf6v67Z5mSzJ7ZZ12j9XzHbFnnCYuL90GR29Sc+iqfbq9ISifDsZTaBy943uy0eiLD4BKwH/s5Lqq5y2E949zJ705BOfj6o07ctOtoePziz/fZFsbUmvj1CVkdyunNAvJoverD17jaz2+o9DLfDchQ7kR8Juwoqh+/HKa6CZkNQwGOReQd1kVH78cvKFjn6zGZzOb0nNHQ6pe4X5QdKvopErv5j4CWT1de7KmWN5veFBqH6JJ6DLSuQrG7PnysWlVvM44Tr4b8wPC6xPxDxMR0S3LeZuSylV1Il17ZMCCZgAuYcFQR4uvpgS/ufF8cAdxgw+2QIDAQAB
+    cloudHSM:
+      enabled: true
+  qseal-certificate-exposure:
+    # AWS endpoint for getting public QSeal certificate of our clients. Note that this will not work in ISP ACC/PRD.
+    enabled: true
+    base-url: https://yolt-${environment}-public-qseal-certs.s3.eu-central-1.amazonaws.com
+  externalIpAddress: 127.0.0.1
+service:
+  siteManagement:
+    url: https://site-management/site-management
+  tokens:
+    url: https://tokens/tokens
+    signature-jwks: '{"keys":[{"kty":"RSA","e":"AQAB","use":"sig","kid":"2808f03d-1050-45f2-8c01-9c2441e050a8","alg":"RS512","n":"lRaJ738bbiMUpmTFLVXioZd7u9T9qm6LSH5FdW1AUrJJG-E4fo6n_30_ftUKc4ZZqotlJ-SvujHvqfNTbVkVy4m4j-yVgTQNP-OIsgTREVckcOk0v8bTaQALB3uCLA7xdDrr24K35tS5E6kDQQ8m9RvHiQk4owNLT81PevHkoH1lfgUwOZHfXLzJBqj_PXPoSIT1y9SfkCn7M00ea28n2xWbGXV_vj8bhJhKSXB2jnlHXO2QEXH6v8VoENl9CaWyjkJ0uJPPCyjRYO4-P2F92Xw88RC0rGGH-AA_sI9l8zOHu2MKFAL9txi2irUBq9bIayTWv0sjBbtHm_hopywVaw"}]}'
+  accountsAndTransactions:
+    url: https://accounts-and-transactions/accounts-and-transactions
+authmeanlogging:
+  providerreferences:
+    PROVIDER_KEY_THAT_WE_WANT_TO_LOG_ON_FIRST_USE: # empty
+    PROVIDER_KEY_THAT_WE_WANT_TO_LOG_ON_STARTUP: # with specified authentication means reference
+      - clientId: 00000000-0000-0000-0000-000000000000
+        redirectUrlId: 00000000-0000-0000-0000-000000000000
+      - clientGroupId: 00000000-0000-0000-0000-000000000000
+        redirectUrlId: 00000000-0000-0000-0000-000000000000
+versioning:
+  providers:
+    YOLT_PROVIDER:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_2
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ING_NL:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_2
+        experimental: VERSION_2
+    ING_FR:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_2
+        experimental: VERSION_2
+    ING_IT:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_2
+        experimental: VERSION_2
+    ING_BE:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+    ING_RO:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+    ING_DE:
+      ais:
+        stable: VERSION_11
+        experimental: VERSION_11
+    LCL:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+      pis:
+        stable: VERSION_2
+        experimental: VERSION_2
+    BANQUE_POPULAIRE:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+      pis:
+        stable: VERSION_2
+        experimental: VERSION_2
+    CAISSE_DEPARGNE_PARTICULIERS:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+    NUTMEG:
+      ais:
+        stable: VERSION_2
+        experimental: VERSION_2
+    LA_BANQUE_POSTALE:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_2
+        experimental: VERSION_2
+    CREDITAGRICOLE:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+    ABN_AMRO:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BNP_PARIBAS:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+      pis:
+        stable: VERSION_2
+        experimental: VERSION_2
+    HELLO_BANK:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+    BELFIUS:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    STARLINGBANK:
+      ais:
+        stable: VERSION_8
+        experimental: VERSION_8
+      pis:
+        stable: VERSION_7
+        experimental: VERSION_7
+    BUNQ:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BCC_CREDITO_COOPERATIVO:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+    BANCA_NAZIONALE_DEL_LAVORO:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+    INTESA_SANPAOLO:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_3
+        experimental: VERSION_3
+    MONTE_DEI_PASCHI_DI_SIENA:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+    BANCA_WIDIBA:
+      ais:
+        stable: VERSION_2
+        experimental: VERSION_2
+    POSTE_ITALIANE:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_3
+        experimental: VERSION_3
+    NEXI:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    FINECO:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    RABOBANK:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANKINTER:
+      ais:
+        stable: VERSION_4
+        experimental: VERSION_4
+    BBVA:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    CAIXA:
+      ais:
+        stable: VERSION_4
+        experimental: VERSION_4
+    SABADELL:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    SANTANDER_ES:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    IBERCAJA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CAJASUR:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CAJA_RURAL:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    KUTXABANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    OPENBANK:
+      ais:
+        stable: VERSION_2
+        experimental: VERSION_2
+    EVO:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    UNICAJA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    LABORAL_KUTXA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    UNICREDIT:
+      ais:
+        stable: VERSION_4
+        experimental: VERSION_4
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    UNICREDIT_RO:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ASN_BANK:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_3
+        experimental: VERSION_3
+    REGIO_BANK:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_3
+        experimental: VERSION_3
+    SNS_BANK:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_3
+        experimental: VERSION_3
+    FIRST_TRUST:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    AIB:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    AIB_IE:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANK_OF_IRELAND:
+      ais:
+        stable: VERSION_7
+        experimental: VERSION_7
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANK_OF_IRELAND_ROI:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BARCLAYS:
+      ais:
+        stable: VERSION_16
+        experimental: VERSION_16
+      pis:
+        stable: VERSION_16
+        experimental: VERSION_16
+    CAPITAL_ONE:
+      ais:
+        stable: VERSION_4
+        experimental: VERSION_4
+    CLYDESDALE_BANK:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    YORKSHIRE:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    DANSKEBANK:
+      ais:
+        stable: VERSION_7
+        experimental: VERSION_7
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    FIRST_DIRECT:
+      ais:
+        stable: VERSION_13
+        experimental: VERSION_13
+      pis:
+        stable: VERSION_13
+        experimental: VERSION_14
+    HSBC:
+      ais:
+        stable: VERSION_13
+        experimental: VERSION_13
+      pis:
+        stable: VERSION_13
+        experimental: VERSION_14
+    HSBC_CORPO:
+      ais:
+        stable: VERSION_11
+        experimental: VERSION_11
+    MARKS_AND_SPENCER:
+      ais:
+        stable: VERSION_13
+        experimental: VERSION_13
+    BANK_OF_SCOTLAND:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_11
+        experimental: VERSION_11
+    BANK_OF_SCOTLAND_CORPO:
+      ais:
+        stable: VERSION_8
+        experimental: VERSION_8
+    HALIFAX:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_11
+        experimental: VERSION_11
+    LLOYDS_BANK:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_11
+        experimental: VERSION_11
+    LLOYDS_BANK_CORPO:
+      ais:
+        stable: VERSION_8
+        experimental: VERSION_8
+    MBNA_CREDIT_CARD:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+      pis:
+        stable: VERSION_11
+        experimental: VERSION_11
+    MONZO:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_5
+        experimental: VERSION_5
+    NATIONWIDE:
+      ais:
+        stable: VERSION_11
+        experimental: VERSION_11
+      pis:
+        stable: VERSION_12
+        experimental: VERSION_12
+    AQUA_CREDIT_CARD:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    AMAZON_CREDIT_CARD:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    ARGOS:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    DEBENHAMS:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    HOUSE_OF_FASER:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    MARBLES:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    COUTTS:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    NATWEST:
+      ais:
+        stable: VERSION_11
+        experimental: VERSION_11
+      pis:
+        stable: VERSION_11
+        experimental: VERSION_11
+    NATWEST_CORPO:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+    ROYAL_BANK_OF_SCOTLAND:
+      ais:
+        stable: VERSION_11
+        experimental: VERSION_11
+      pis:
+        stable: VERSION_11
+        experimental: VERSION_11
+    ROYAL_BANK_OF_SCOTLAND_CORPO:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+    ULSTER_BANK:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_10
+        experimental: VERSION_10
+    REVOLUT:
+      ais:
+        stable: VERSION_10
+        experimental: VERSION_10
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    REVOLUT_EU:
+      ais:
+        stable: VERSION_8
+        experimental: VERSION_8
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    SAINSBURYS_BANK:
+      ais:
+        stable: VERSION_2
+        experimental: VERSION_2
+    SANTANDER:
+      ais:
+        stable: VERSION_17
+        experimental: VERSION_17
+      pis:
+        stable: VERSION_15
+        experimental: VERSION_15
+    TESCO_BANK:
+      ais:
+        stable: VERSION_7
+        experimental: VERSION_7
+      pis:
+        stable: VERSION_5
+        experimental: VERSION_5
+    TRIODOS_BANK_NL:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    TSB_BANK:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+      pis:
+        stable: VERSION_5
+        experimental: VERSION_5
+    VANQUIS_BANK:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    VIRGIN_MONEY:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_4
+        experimental: VERSION_4
+    KBC_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CBC_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    AMEX:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_7
+    AMEX_EU:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+    CREDIT_MUTUEL:
+      ais:
+        stable: VERSION_7
+        experimental: VERSION_7
+    SOCIETE_GENERALE_ENT:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_5
+        experimental: VERSION_5
+    SOCIETE_GENERALE_PRI:
+      ais:
+        stable: VERSION_6
+        experimental: VERSION_6
+      pis:
+        stable: VERSION_5
+        experimental: VERSION_5
+    SOCIETE_GENERALE_PRO:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+      pis:
+        stable: VERSION_5
+        experimental: VERSION_5
+    CREDIT_DU_NORD:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANQUE_COURTOIS:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANQUE_KOLB:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANQUE_LAYDERNIER:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANQUE_NUGER:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANQUE_RHONE_ALPES:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANQUE_TARNEAUD:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    SOCIETE_DE_BANQUE_MONACO:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    SOCIETE_MARSEILLAISE_DE_CREDIT:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BOURSORAMA:
+      ais:
+        stable: VERSION_4
+        experimental: VERSION_4
+      pis:
+        stable: VERSION_3
+        experimental: VERSION_3
+    N26:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CIC:
+      ais:
+        stable: VERSION_5
+        experimental: VERSION_5
+    KNAB_BANK_NL:
+      ais:
+        stable: VERSION_2
+        experimental: VERSION_2
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BNP_PARIBAS_FORTIS:
+      ais:
+        stable: VERSION_2
+        experimental: VERSION_2
+    FORTUNEO:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    BUDGET_INSIGHT:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    AXA_BANQUE:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+    AXA_BE:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BPOST:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CRELAN:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    COMDIRECT:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    TIDE:
+      ais:
+        stable: VERSION_3
+        experimental: VERSION_3
+      pis:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANCA_TRANSILVANIA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANCA_COMERCIALA_ROMANA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    HYPOVEREINSBANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    DEUTSCHE_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    POSTBANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    DEUTSCHE_BANK_ES:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    DEUTSCHE_BANK_IT:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    SPARKASSEN:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    LBBW:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    NORD_LB:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANCO_BPM:
+      ais:
+        stable: VERSION_2
+        experimental: VERSION_2
+    CONSORSBANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    DIREKT1822:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ALPHA_BANK_ROMANIA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    VIRGIN_MONEY_MERGED_APIS:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    DKB:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    PERMANENT_TSB:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ARGENTA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BEOBANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANCA_MEDIOLANUM:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    RAIFFEISEN_BANK_RO:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANCA_SELLA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BRD:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CAJAMAR_CAJA_RURAL:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ABANCA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    COMMERZBANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BANK_VAN_BREDA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    OLB_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    RAIFFEISEN_AT:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    VOLKSBANKEN_RAIFFEISEN:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CHEBANCA:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    KEYTRADE_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CEC:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    LIBRA_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    QONTO:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ALLIANZ_BANQUE:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    MAX_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CREDIT_MUTUEL_DU_SUD_OUEST:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    CREDIT_MUTUEL_DE_BRETAGNE:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    BPE_BANK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ARKEA_BANQUE_PRIVEE:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ARKEA_BANQUE_ENTREPRISES:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ARKEA_BANKING_SERVICES:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    KBC_IE:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    SEB_AG:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    HANDELSBANKEN_NL:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+
+
+consentTesting:
+  blacklistedAisProviders:
+    - BARCLAYS
+    - BELFIUS
+    - CAISSE_DEPARGNE_PARTICULIERS
+    - BANQUE_POPULAIRE
+    - CREDITAGRICOLE
+    - BCC_CREDITO_COOPERATIVO
+    - KBC_BANK
+    - POSTBANK
+    - DEUTSCHE_BANK
+    - DEUTSCHE_BANK_ES
+    - SPARKASSEN
+    - UNICREDIT_RO
+    - TEST_IMPL_OPENBANKING
+    - ROYAL_BANK_OF_SCOTLAND_CORPO
+    - NATWEST_CORPO
+    - DIREKT1822
+    - OPENBANK
+    - CBC_BANK
+    - ARGENTA # C4PO-8542 Disabled, implementation of authorization layer in progress
+    - CAJA_RURAL # Has form on first step
+    - SABADELL # Disabled due to a lot of JS redirects on consent page, decision taken in C4PO-9657
+    - BNP_PARIBAS # Temporarily disabled till the resolution of C4PO-9656
+    - BEOBANK # C4PO-10051 Disabled, implementation in progress
+    - BANCA_SELLA # C4PO-9989 implementation in progress
+    - BRD # Has form as first step
+    - NEXI # C4PO-9977 implementation in progress
+    - HELLO_BANK # Temporarily disabled till the resolution of C4PO-10504
+    - OLB_BANK
+    - BANK_VAN_BREDA #c4po disable until implementation is done C4PO-10251
+    - CHEBANCA # Disabled due to a lot of JS redirects on consent page
+    - VOLKSBANKEN_RAIFFEISEN # no consent page, it won't work here
+    - VANQUIS_BANK #C4PO-10509 consent testing is not working for this bank. Root cause is unknown
+    - LIBRA_BANK #C4po-10287 remove when implementation is done
+    - ALPHA_BANK_ROMANIA #C4PO-10299 disable until implementation is done
+    - DEUTSCHE_BANK_IT # Has form as first step
+    - RAIFFEISEN_AT # Unable to check it due to how it works (401)
+    - RAIFFEISEN_BANK_RO # C4PO-10013 implementation in progress
+    - KBC_IE #C4PO-6402 implementation in progress
+    - SEB_AG #C4PO-10427 implementation in progress
+    - HANDELSBANKEN_NL #C4PO-10785 implementation in progress
+    - POSTE_ITALIANE # Due to form step
+    - CLYDESDALE_BANK #C4PO-11542 remove with this ticket
+    - YORKSHIRE #C4PO-11542 remove with this ticket
+    - BANQUE_LAYDERNIER #C4PO-11550 Bank not used anymore
+    - ARKEA_BANQUE_PRIVEE #C4PO-11550 Bank not used anymore
+    - NORD_LB #C4PO-11550 Bank not used anymore
+    - FIRST_TRUST #C4PO-11550 Bank not used anymore
+    - CEC #C4PO-11550 Bank not used anymore
+    - BPOST #C4PO-11550 Bank not used anymore
+    - ING_IT #C4PO-11550 Bank not used anymore
+    - COMDIRECT #C4PO-11550 Bank not used anymore
+    - AXA_BE #C4PO-11550 Bank not used anymore
+    - LBBW #C4PO-11550 Bank not used anymore
+    - BANQUE_COURTOIS #C4PO-11550 Bank not used anymore
+    - CREDIT_DU_NORD #C4PO-11550 Bank not used anymore
+    - ALLIANZ_BANQUE #C4PO-11550 Bank not used anymore
+    - ARKEA_BANQUE_ENTREPRISES #C4PO-11550 Bank not used anymore
+    - CREDIT_MUTUEL_DE_BRETAGNE #C4PO-11550 Bank not used anymore
+    - COMMERZBANK #C4PO-11550 Bank not used anymore
+    - BANQUE_NUGER #C4PO-11550 Bank not used anymore
+    - SOCIETE_MARSEILLAISE_DE_CREDIT #C4PO-11550 Bank not used anymore
+    - SOCIETE_DE_BANQUE_MONACO #C4PO-11550 Bank not used anymore
+    - BANQUE_TARNEAUD #C4PO-11550 Bank not used anymore
+    - BANQUE_RHONE_ALPES #C4PO-11550 Bank not used anymore
+    - ARKEA_BANKING_SERVICES #C4PO-11550 Bank not used anymore
+    - CREDIT_MUTUEL_DU_SUD_OUEST #C4PO-11550 Bank not used anymore
+    - BPE_BANK #C4PO-11550 Bank not used anymore
+    - KEYTRADE_BANK #C4PO-11550 Bank not used anymore
+    - MAX_BANK #C4PO-11550 Bank not used anymore
+    - BANQUE_KOLB #C4PO-11550 Bank not used anymore
+    - CRELAN #C4PO-11550 Bank not used anymore
+    - CAJAMAR_CAJA_RURAL #C4PO-11550 Bank not used anymore
+    - QONTO #C4PO-11550 Bank not used anymore
+  blacklistedPisProviders:
+    - AIB
+    - FIRST_TRUST
+    - FINECO
+    - SOCIETE_GENERALE_ENT
+    - SOCIETE_GENERALE_PRO
+    - MONZO
+    - TESCO_BANK
+    - NATWEST
+    - ROYAL_BANK_OF_SCOTLAND
+    - ULSTER_BANK
+    - TSB_BANK
+    - ABN_AMRO
+    - ASN_BANK
+    - BANK_OF_SCOTLAND
+    - BANQUE_POPULAIRE
+    - BARCLAYS
+    - BOURSORAMA
+    - BNP_PARIBAS
+    - FIRST_DIRECT
+    - HALIFAX
+    - HSBC
+    - ING_FR
+    - ING_IT
+    - ING_NL
+    - INTESA_SANPAOLO
+    - LA_BANQUE_POSTALE
+    - LCL
+    - LLOYDS_BANK
+    - MARKS_AND_SPENCER
+    - NATIONWIDE
+    - POSTE_ITALIANE
+    - RABOBANK
+    - REGIO_BANK
+    - SANTANDER
+    - SNS_BANK
+    - SOCIETE_GENERALE_PRI
+    - STARLINGBANK
+    - TEST_IMPL_OPENBANKING
+    - UNICREDIT
+    - VIRGIN_MONEY
+    - MBNA_CREDIT_CARD # Still under development C4PO-9474
+    - DANSKEBANK # Still under development C4PO-9486
+    - BANK_OF_IRELAND # not allowed to initiate payment with random data
+    - BUNQ #Still under development C4PO-973
+    - TIDE #default set of initiation data doesn't passed validation
+lovebird:
+  kafka:
+    accountAndTransactionsErrorsTopic: ingestionRequestsErrors
+  formProvider:
+    externalUserIdsSliceLimit: 10000
+  abnamrogroup:
+    abnamro:
+      base-url: https://api-sandbox.abnamro.com
+      oauth2-url: https://auth-sandbox.abnamro.com/as/authorization.oauth2
+      token-url: https://auth-mtls-sandbox.abnamro.com/as/token.oauth2
+      ais-scope: psd2:account:balance:read+psd2:account:transaction:read+psd2:account:details:read
+  asyncweb:
+    max-web-thread-pool-size: 50
+  datalimit:
+    transactionsLimit: 4000
+    transactionDescriptionLengthLimit: 500
+    accountsLimit: 20
+  # sandbox only
+  rabobank:
+    base-url: https://api-sandbox.rabobank.nl/openapi/sandbox/
+    base-url-pis: https://api-sandbox.rabobank.nl
+    base-authorization-url: https://oauth-sandbox.rabobank.nl/openapi/
+    o-auth-authorization-scope: "ais.balances.read ais.transactions.read-90days ais.transactions.read-history"
+  fineco:
+    pagination-limit: 1000
+    base-url: https://api.finecobank.com/v1
+    consent-url: /consents
+    transactionsTimeFrameDays: 90
+    transactionsTimeFrameMinutes: 20
+    card-accounts:
+      accounts-url: /card-accounts
+      account-url-template: '/card-accounts/%s'
+      transactions-url-template: '/card-accounts/%s/transactions?bookingStatus=%s&dateFrom=%s'
+      balances-url-template: '/card-accounts/%s/balances'
+    current-accounts:
+      accounts-url: /accounts
+      account-url-template: '/accounts/%s'
+      transactions-url-template: '/accounts/%s/transactions?bookingStatus=%s&dateFrom=%s'
+      balances-url-template: '/accounts/%s/balances'
+    sepa-payments:
+      payment-initiation: /payments/sepa-credit-transfers
+      payment-status: '/payments/sepa-credit-transfers/%s/status'
+  unicredit:
+    registration:
+      base-url: https://api.unicredit.eu
+    it:
+      paginationLimit: 1000
+      frequencyPerDay: 4
+      base-url: https://api.unicredit.it
+    ro:
+      paginationLimit: 1000
+      frequencyPerDay: 4
+      base-url: https://api.unicredit.ro
+    hypovereinsbank:
+      paginationLimit: 500
+      frequencyPerDay: 4
+      base-url: https://api.unicredit.de
+  volksbank:
+    sns:
+      base-url: https://bogus.com/psd2/snsbank/v1
+      authorization-url: https://bogus.com/psd2/snsbank/sandbox/v1/authorize
+      pagination-limit: 2000
+    regio:
+      base-url: https://bogus.com/psd2/regiobank/v1
+      authorization-url: https://bogus.com/psd2/regiobank/sandbox/v1/authorize
+      pagination-limit: 2000
+    asn:
+      base-url: https://bogus.com/psd2/asnbank/v1
+      authorization-url: https://bogus.com/psd2/asnbank/sandbox/v1/authorize
+      pagination-limit: 2000
+  redsys:
+    bankinter:
+      base-url: https://bogus.com/psd2/bankinter/v1
+      authorization-url: https://bogus.com/psd2/bankinter/sandbox/v1
+      pagination-limit: 2000
+    bbva:
+      base-url: https://bogus.com/psd2/bbva/v1
+      authorization-url: https://bogus.com/psd2/bbva/sandbox/v1
+      pagination-limit: 2000
+    caixa:
+      base-url: https://bogus.com/psd2/caixa/v1
+      authorization-url: https://bogus.com/psd2/caixa/sandbox/v1
+      pagination-limit: 2000
+    sabadell:
+      base-url: https://bogus.com/psd2/sabadell/v1
+      authorization-url: https://bogus.com/psd2/sabadell/sandbox/v1
+      pagination-limit: 2000
+    santander:
+      base-url: https://bogus.com/psd2/santander/v1
+      authorization-url: https://bogus.com/psd2/santander/sandbox/v1
+      pagination-limit: 2000
+    cajasur:
+      base-url: https://bogus.com/psd2/cajasur/v1
+      authorization-url: https://bogus.com/psd2/cajasur/sandbox/v1
+      pagination-limit: 2000
+    cajarural:
+      base-url: https://bogus.com/psd2/cajarural/v1
+      authorization-url: https://bogus.com/psd2/cajarural/sandbox/v1
+      pagination-limit: 2000
+    kutxabank:
+      base-url: https://bogus.com/psd2/kutxabank/v1
+      authorization-url: https://bogus.com/psd2/kutxabank/sandbox/v1
+      pagination-limit: 2000
+    openbank:
+      base-url: https://bogus.com/psd2/openbank/v1
+      authorization-url: https://bogus.com/psd2/openbank/sandbox/v1
+      pagination-limit: 2000
+    unicaja:
+      base-url: https://bogus.com/psd2/openbank/v1
+      authorization-url: https://bogus.com/psd2/unicaja/sandbox/v1
+      pagination-limit: 2000
+    evo:
+      base-url: https://bogus.com/psd2/openbank/v1
+      authorization-url: https://bogus.com/psd2/EVOBANCO/sandbox/v1
+      pagination-limit: 2000
+    laboralkutxa:
+      base-url: https://bogus.com/psd2/openbank/v1
+      authorization-url: https://bogus.com/psd2/laboralkutxa/sandbox/v1
+      pagination-limit: 2000
+    ibercaja:
+      base-url: https://bogus.com/services/ibercaja
+      authorization-url: https://bogus.com/services/rest/ibercaja
+      pagination-limit: 2000
+    cajamarcajarural:
+      base-url: https://bogus.com/services/grupocajamar
+      authorization-url: https://bogus.com/services/rest/grupocajamar
+      pagination-limit: 2000
+
+  cbiglobe:
+    posteitaliane:
+      baseUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      basePaymentsUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      tokenUrl: https://cbiglobeopenbankingapigateway.nexi.it/auth/oauth/v2/token
+      callbackUrl: https://www.yolt.com/callback-acc
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 1000
+      aspsps:
+        - code: ASPSP_MM_01
+          productCode: ASPSP_PRODUCT_001
+          displayName: banca di poste italiane
+    intesasanpaolo:
+      baseUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      basePaymentsUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      tokenUrl: https://cbiglobeopenbankingapigateway.nexi.it/auth/oauth/v2/token
+      callbackUrl: https://www.yolt.com/callback-acc
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 1000
+      aspsps:
+        - code: ASPSP_MM_01
+          productCode: ASPSP_PRODUCT_001
+          displayName: intesa san paolo
+    bnl:
+      baseUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      tokenUrl: https://cbiglobeopenbankingapigateway.nexi.it/auth/oauth/v2/token
+      callbackUrl: https://www.yolt.com/callback-acc
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 1000
+      aspsps:
+        - code: ASPSP_MM_01
+          productCode: ASPSP_PRODUCT_001
+          displayName: banca del lavoro
+    montepaschisiena:
+      baseUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      tokenUrl: https://cbiglobeopenbankingapigateway.nexi.it/auth/oauth/v2/token
+      callbackUrl: https://www.yolt.com/callback-acc
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 1000
+      aspsps:
+        - code: ASPSP_MM_01
+          productCode: ASPSP_PRODUCT_001
+          displayName: banca di monte paschi del siena
+    bancawidiba:
+      baseUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      tokenUrl: https://cbiglobeopenbankingapigateway.nexi.it/auth/oauth/v2/token
+      callbackUrl: https://www.yolt.com/callback-acc
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 1000
+      aspsps:
+        - code: ASPSP_MM_01
+          productCode: ASPSP_PRODUCT_001
+          displayName: banca widiba
+    bcc:
+      baseUrl: https://cbiglobeopenbankingapigateway.nexi.it
+      tokenUrl: https://cbiglobeopenbankingapigateway.nexi.it/auth/oauth/v2/token
+      callbackUrl: https://www.yolt.com/callback-acc
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 4
+      aspsps:
+        - code: ASPSP_MM_01
+          productCode: ASPSP_PRODUCT_001
+          displayName: banca di credito cooperativo roma
+        - code: ASPSP_MM_01
+          productCode: ASPSP_PRODUCT_001
+          displayName: banca di credito cooperativo milano
+    bpm:
+      baseUrl: https://cbiglobeopenbankingapigateway.nexi.it/platform/enabler/psd2orchestrator/ais/2.3.2
+      tokenUrl: https://cbiglobeopenbankingapigateway.nexi.it/auth/oauth/v2/token
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 4
+      aspsps:
+        - code: "05034"
+          productCode: ASPSP_PRODUCT_001
+          displayName: Banco BPM
+    nexi:
+      baseUrl: https://bogus.bogus.it
+      tokenUrl: https://bogus.bogus.it/auth/oauth/v2/token
+      transactionsPaginationLimit: 100
+      consentValidityInDays: 90
+      frequencyPerDay: 4
+      aspsps:
+        - code: "12345"
+          productCode: ASPSP_PRODUCT_001
+          displayName: Nexi
+  triodosbank:
+    nl:
+      baseUrl: http://xs2a-sandbox.triodos.com/xs2a-bg/nl
+      tokenUrl: http://xs2a-sandbox.triodos.com/auth/nl/v1/token
+      transactionsPaginationLimit: 100
+  #   sandbox only
+
+  deutschebankgroup:
+    deutschebank:
+      aisBaseUrl: https://bogus.com/ais/DE/DB
+      psuIdType: DE_ONLB_DB
+      paginationLimit: 1000
+    postbank:
+      aisBaseUrl: https://bogus.com/ais/DE/Postbank
+      psuIdType: DE_ONLB_POBA
+      paginationLimit: 1000
+    deutschebankes:
+      aisBaseUrl: https://bogus.com/ais/ES/DB
+      psuIdType: ES_ONLB_DB
+      paginationLimit: 1000
+      corePoolSize: 2
+      consentStatusPollingInitialDelayInSeconds: 30
+      consentStatusPollingTotalDelayLimitInSeconds: 600
+    deutschebankit:
+      aisBaseUrl: https://bogus.com/ais/IT/DB
+      psuIdType: IT_ONLB_DB
+      paginationLimit: 1000
+  sparkassen:
+    baseUrl: https://bogus.com
+    paginationLimit: 2000
+    departments:
+      - formValue: BERLINER_SPARKASSE
+        displayName: Berliner Sparkasse
+        bankCode: 10050000
+  lbbw:
+    baseUrl: https://bogus.com
+    paginationLimit: 2000
+    bankCode: 22222222
+  nordlb:
+    baseUrl: https://bogus.com
+    paginationLimit: 2000
+    bankCode: 22222222
+  bunq:
+    base-url: https://public-api.sandbox.bunq.com/v1
+    oauth-token-url: https://api-oauth.sandbox.bunq.com/v1/token
+    oauth-authorization-base-url: https://oauth.sandbox.bunq.com/auth
+    our-external-ip-address: 18.197.245.4
+    accountsPerPage: 25
+    transactionsPerPage: 25
+  ing:
+    nl:
+      fetchDataRetryLimit: 13
+      baseUrl: http://yoltbank/yoltbank/ing
+      oAuthTokenEndpoint: /token
+      authorizationUrlServerEndpoint: /authorization-server-url
+      paginationLimit: 1000
+    fr:
+      fetchDataRetryLimit: 3
+      baseUrl: http://yoltbank/yoltbank/ing
+      oAuthTokenEndpoint: /token
+      authorizationUrlServerEndpoint: /authorization-server-url
+      paginationLimit: 1000
+    it:
+      fetchDataRetryLimit: 3
+      baseUrl: http://yoltbank/yoltbank/ing
+      oAuthTokenEndpoint: /token
+      authorizationUrlServerEndpoint: /authorization-server-url
+      paginationLimit: 1000
+    be:
+      fetchDataRetryLimit: 3
+      baseUrl: http://yoltbank/yoltbank/ing
+      oAuthTokenEndpoint: /token
+      authorizationUrlServerEndpoint: /authorization-server-url
+      paginationLimit: 1000
+    ro:
+      fetchDataRetryLimit: 3
+      baseUrl: http://yoltbank/yoltbank/ing
+      oAuthTokenEndpoint: /token
+      authorizationUrlServerEndpoint: /authorization-server-url
+      paginationLimit: 1000
+    de:
+      fetchDataRetryLimit: 3
+      baseUrl: http://yoltbank/yoltbank/ing
+      oAuthTokenEndpoint: /token
+      authorizationUrlServerEndpoint: /authorization-server-url
+      paginationLimit: 1000
+  starlingbank:
+    baseUrl: https://api-sandbox.starlingbank.com/api/v1
+    oAuthAuthorizationBaseUrl: https://oauth-sandbox.starlingbank.com/
+    oAuthTokenUrl: https://token-api-sandbox.starlingbank.com/oauth/access-token
+  monzogroup:
+    monzo:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      oAuthAuthorizationUrl: https://bogus.com
+      registrationUrl: https://bogus.com
+      registrationAudience: registration-audience
+      audience: audience
+  openbanking:
+    baseUrl: https://yoltbank/yoltbank/openbanking/v3
+    oAuthAuthorizationUrl: https://ingress.integration.yolt.io/yoltbank/openbanking/v3/authorize
+    oAuthTokenUrl: https://yoltbank/yoltbank/openbanking/v3/token
+    paginationLimit: 1000
+    audience: Yoltbank
+  yoltprovider:
+    baseUrl: http://stubs/stubs/yoltprovider
+    baseUrlPin: sha1/KSIl5WzfUZO/4+GlP/ynHa6wdPo=
+    customerAuthorizationUrl: https://ingress.integration.yolt.io/stubs/yoltprovider/authorize
+  lloydsgroup:
+    lloyds:
+      baseUrl: https://luat01-secure-api.lloydsbank.com/luat01/lbg/lyds/open-banking
+      paymentsUrl: https://luat01-secure-api.lloydsbank.com/luat01/lbg/lyds/open-banking
+      oAuthTokenUrl: https://luat01-secure-api.lloydsbank.com/luat01/lbg/lyds/oauth-cc/oauth2/token
+      oAuthAuthorizationUrl: https://luat01-authorise-api.lloydsbank.com/luat01/lbg/lyds/oidc-api/oauth2/authorize
+      issuer: https://www.yolt.com
+      paginationLimit: 1000
+      audience: https://bogus.com
+    bankofscotland:
+      baseUrl: https://luat01-secure-api.bankofscotland.co.uk/luat01/lbg/bos/open-banking
+      paymentsUrl: https://luat01-secure-api.bankofscotland.co.uk/luat01/lbg/bos/open-banking
+      oAuthTokenUrl: https://luat01-secure-api.bankofscotland.co.uk/luat01/lbg/bos/oauth-cc/oauth2/token
+      oAuthAuthorizationUrl: https://luat01-authorise-api.bankofscotland.co.uk/luat01/lbg/bos/oidc-api/oauth2/authorize
+      issuer: https://www.yolt.com
+      paginationLimit: 1000
+      audience: https://bogus.com
+    halifax:
+      baseUrl: https://luat01-secure-api.halifax.co.uk/luat01/lbg/hfx/open-banking
+      paymentsUrl: https://luat01-secure-api.halifax.co.uk/luat01/lbg/hfx/open-banking
+      oAuthTokenUrl: https://luat01-secure-api.halifax.co.uk/luat01/lbg/hfx/oauth-cc/oauth2/token
+      certificatePin: sha1/cSDptQB+tBfvItsGYIjc31DwGwU=
+      oAuthAuthorizationUrl: https://luat01-authorise-api.halifax.co.uk/luat01/lbg/hfx/oidc-api/oauth2/authorize
+      issuer: https://www.yolt.com
+      paginationLimit: 1000
+      audience: https://bogus.com
+    lloyds-corporate:
+      baseUrl: https://luat01-secure-api.lloydsbank.com/luat01/lbg/lyds/open-banking
+      paymentsUrl: https://luat01-secure-api.lloydsbank.com/luat01/lbg/lyds/open-banking
+      oAuthTokenUrl: https://luat01-secure-api.lloydsbank.com/luat01/lbg/lyds/oauth-cc/oauth2/token
+      oAuthAuthorizationUrl: https://luat01-authorise-api.lloydsbank.com/luat01/lbg/lyds/oidc-api/oauth2/authorize
+      issuer: https://www.yolt.com
+      paginationLimit: 1000
+      audience: https://bogus.com
+    bankofscotland-corporate:
+      baseUrl: https://luat01-secure-api.bankofscotland.co.uk/luat01/lbg/bos/open-banking
+      paymentsUrl: https://luat01-secure-api.bankofscotland.co.uk/luat01/lbg/bos/open-banking
+      oAuthTokenUrl: https://luat01-secure-api.bankofscotland.co.uk/luat01/lbg/bos/oauth-cc/oauth2/token
+      oAuthAuthorizationUrl: https://luat01-authorise-api.bankofscotland.co.uk/luat01/lbg/bos/oidc-api/oauth2/authorize
+      issuer: https://www.yolt.com
+      paginationLimit: 1000
+      audience: https://bogus.com
+    mbna-credit-card:
+      baseUrl: https://bogus.com
+      paymentsUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      oAuthAuthorizationUrl: https://bogus.com
+      issuer: https://www.yolt.com
+      paginationLimit: 1000
+      audience: https://bogus.com
+  aibgroup:
+    aib:
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      oAuthTokenUrlV2: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+      registrationAudience: registration-audience
+    aib-ni:
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      oAuthTokenUrlV2: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+      registrationAudience: registration-audience
+    aib-ie:
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      oAuthTokenUrlV2: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+      registrationAudience: registration-audience
+  abancagroup:
+    abanca:
+      baseUrl: https://bogus.com/
+      paginationLimit: 100
+  hsbcgroup:
+    hsbc:
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      registrationUrl: https://bogus.com/register
+      paginationLimit: 1000
+    hsbc-corporate:
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      registrationUrl: https://bogus.com/register
+      paginationLimit: 1000
+    firstdirect:
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      registrationUrl: https://bogus.com/register
+      paginationLimit: 1000
+    marksandspencer:
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      registrationUrl: https://bogus.com/register
+      paginationLimit: 1000
+  rbsgroup:
+    coutts:
+      baseUrl: https://bogus.com
+      baseUrlPis: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+      refreshTokenUrl: https:/bogus.com
+    rbs:
+      baseUrl: https://bogus.com
+      baseUrlPis: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+    natwest:
+      baseUrl: https://bogus.com
+      baseUrlPis: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+    ulsterbank:
+      baseUrl: https://bogus.com
+      baseUrlPis: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+    rbs-corporate:
+      baseUrl: https://bogus.com
+      baseUrlPis: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+    natwest-corporate:
+      baseUrl: https://bogus.com
+      baseUrlPis: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      paginationLimit: 1000
+      registrationUrl: https://bogus.com
+  danske:
+    baseUrl: https://bogus.com
+    oAuthTokenUrl: https://bogus.com/oauth2/token
+    oAuthAuthorizationUrl: https://bogus.com/authorize
+    paginationLimit: 1000
+    registrationUrl: https://bogus.com/1/api/open-banking/v1.2/register
+  nationwide:
+    paginationLimit: 1000
+    baseUrl: https://api.nationwide.co.uk/open-banking/v2.0
+    oAuthTokenUrl: https://bogus.com/oauth/token
+    oAuthAuthorizationUrl: https://bogus.com/oauth/authorize
+    paymentsUrl: https://api.nationwide.co.uk/open-banking/v1.1/payments
+    paymentSubmissionsUrl: https://api.nationwide.co.uk/open-banking/v1.1/payment-submissions
+    refreshTokenExpiredMessage: refresh token is invalid or expired
+    registrationUrl: https://bogus.com/register
+    registrationAudience: https://bogus.com
+  santander:
+    audience: fakeAudience
+    paginationLimit: 1000
+    baseUrl: https://bogus.com
+    oAuthAuthorizationUrl: https://bogus.com/oauth2/authorize
+    oAuthTokenUrl: https://bogus.com/oauth2/token
+  barclaysgroup:
+    barclays:
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+      aisBarclaycardOAuthAuthorizationUrl: https://bogus.com/authorize
+      aisBusinessOAuthAuthorizationUrl: https://bogus.com/authorize
+      customerTypes:
+        - code: PERSONAL
+          type: Personal Banking customer
+          authorizationUrl: https://bogus.com/authorize
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+  bankofireland:
+    paginationLimit: 1000
+    baseUrl: https://bogus.com
+    oAuthTokenUrl: https://bogus.com
+    registrationUrl: https://bogus.com/1/api/open-banking/v1.2/register
+    audience: https://bogus.com
+  bankofirelandgroup:
+    bankofireland:
+      paginationLimit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      registrationUrl: https://bogus.com/1/api/open-banking/v1.2/register
+      audience: https://bogus.com
+    bankofirelandroi:
+      paginationLimit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      registrationUrl: https://bogus.com/1/api/open-banking/v1.2/register
+      audience: https://bogus.com
+  tsbgroup:
+    tsb:
+      consentExpirationMin: 3
+      baseUrl: https://bogus.com/apis/open-banking
+      oAuthTokenUrl: https://bogus.com/apis/open-banking/v3.1/oauth2/token
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+      registrationUrl: https://bogus.com
+      audience: https://bogus.com/audience
+      paginationLimit: 1000
+  revolut:
+    audience: https://bogus.com
+    baseUrl: https://bogus.com
+    oAuthTokenUrl: https://bogus.com
+    oAuthAuthorizationUrl: https://bogus.com
+    registrationUrl: https://bogus.com/register
+    jwksRootDomain: openbanking.org.uk
+  amexgroup:
+    amex:
+      base-url: https://bogus.com
+      authorization-base-url-v2: https://bogus.com/oauth
+      host: bogus.com
+      port: 443
+      pagination-limit: 100
+      page-size: 100
+    amexob:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com
+      oAuthAuthorizationUrl: https://bogus.com
+  virginmoney:
+    pagination-limit: 1000
+    baseUrl: https://bogus.com
+    registrationUrl: https://bogus.com/register
+    oAuthTokenUrl: https://bogus.com/oauth2/token
+    oAuthAuthorizationUrl: https://bogus.com/authorize
+    registrationAudience: registrationAudience
+  cybgroup:
+    clydesdale:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com/oauth2/token
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+      audience: bogus
+    yorkshire:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com/oauth2/token
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+      audience: bogus
+  tescobank:
+    pagination-limit: 1000
+    baseUrl: https://bogus.com
+    oAuthTokenUrl: https://bogus.com/oauth-token
+    oAuthAuthorizationUrl: https://bogus.com/authorize
+    registrationUrl: https://bogus.com/register
+    audience: audience
+  permanenttsbgroup:
+    permanenttsb:
+      pagination-limit: 1000
+      baseUrl: https://developer.permanenttsb.ie/psd2api/
+      oAuthTokenUrl: https://developer.permanettsb.ie/psd2api/as/token.oauth2
+      oAuthAuthorizationUrl: https://developer.permanenttsb.ie/psd2api/as/auth-code-url
+      registrationUrl: https://developer.permanenttsb.ie/register
+  newdaygroup:
+    amazoncreditcard:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com/oauth2/token
+      oAuthTokenUrl: https://bogus.com/oauth2/identity/v1.0/amazon/connect/token
+      oAuthAuthorizationUrl: https://bogus.com/identity/v1.0/amazon/connect/authorize
+    aquacreditcard:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com/oauth2/token
+      oAuthTokenUrl: https://bogus.com/oauth2/identity/v1.0/amazon/connect/token
+      oAuthAuthorizationUrl: https://bogus.com/identity/v1.0/amazon/connect/authorize
+    argos:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com/oauth2/token
+      oAuthTokenUrl: https://bogus.com/oauth2/identity/v1.0/amazon/connect/token
+      oAuthAuthorizationUrl: https://bogus.com/identity/v1.0/amazon/connect/authorize
+    debenhams:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com/oauth2/token
+      oAuthTokenUrl: https://bogus.com/oauth2/identity/v1.0/amazon/connect/token
+      oAuthAuthorizationUrl: https://bogus.com/identity/v1.0/amazon/connect/authorize
+    houseoffaser:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com/oauth2/token
+      oAuthTokenUrl: https://bogus.com/oauth2/identity/v1.0/amazon/connect/token
+      oAuthAuthorizationUrl: https://bogus.com/identity/v1.0/amazon/connect/authorize
+    marbles:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com/oauth2/token
+      oAuthTokenUrl: https://bogus.com/oauth2/identity/v1.0/amazon/connect/token
+      oAuthAuthorizationUrl: https://bogus.com/identity/v1.0/amazon/connect/authorize
+  sainsburys:
+    pagination-limit: 1000
+    audience: audience
+    baseUrl: https://bogus.com
+    oAuthTokenUrl: https://bogus.com/oauth-token
+    oAuthAuthorizationUrl: https://bogus.com/authorize
+    registrationUrl: https://bogus.com/register
+  vanquisgroup:
+    vanquis:
+      audience: audience
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com/token
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+      registrationUrl: https://bogus.com/register
+      registrationAudience: registrationAudience
+  capitalonegroup:
+    capitalone:
+      audience: test-audience
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com/oauth/token
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+  nutmeggroup:
+    nutmeg:
+      authorizeUrl: https://bogus.com/authorize
+      potsUrl: https://bogus.com/customers/pots
+      tokenUrl: https://bogus.com/oauth/token
+      scope: bogus
+      audience: bogus
+      codeChallengeMethod: S256
+  belfiusGroup:
+    belfius:
+      baseUrl: https://bogus.com
+      pagination-limit: 1000
+      transactionsAcceptHeaderValue: application/vnd.belfius.api+json; version=1.2
+      acceptHeaderValue: application/vnd.belfius.api+json; version=1
+  kbcgroup:
+    kbcbank:
+      pagination-limit: 1000
+      base-url: https://bogus.com/psd2/v2
+      authorization-url: https://bogus.com/ASK/oauth/authorize/1
+      token-url: https://bogus.com/ASK/oauth/token/1
+    cbcbank:
+      pagination-limit: 1000
+      base-url: https://bogus.com/psd2/v2
+      authorization-url: https://bogus.com/ASK/oauth/authorize/1
+      token-url: https://bogus.com/ASK/oauth/token/1
+  n26Group:
+    n26:
+      baseUrl: https://bogus.com
+      authorizationUrl: https:/bogus.com/app/request-token/
+      tokenEndpoint: /token-requests
+      corePoolSize: 2
+      pagination-limit: 1000
+      consentStatusPollingInitialDelaySeconds: 13 #polling will be done after 13,14,16,20,28 seconds
+      consentStatusPollingTotalDelayLimitSeconds: 29
+  knabgroup:
+    knab:
+      baseUrl: https:/bogus.com/ #https://tpp-loket.knab.nl/openbanking
+      authorizationUrl: https:/bogus.com/ #https://login.knab.nl
+  tidegroup:
+    tide:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      oAuthTokenUrl: https://bogus.com/token
+      oAuthAuthorizationUrl: https://bogus.com/links/openbanking/authorise
+      registrationUrl: https://bogus.com/v1.0/dynamic-client-registration/v3.1/register
+      audience: audience
+      registrationAudience: registration-audience
+  bancatransilvaniagroup:
+    bancatransilvania:
+      baseUrl: https://bogus.com/bt/sb
+      authorizeUrl: https://bogus.com/prd/sps/oauth/oauth20/authorize
+      paginationLimit: 1000
+  bcrgroup:
+    bcr:
+      baseUrl: https://bogus.com/api/bcr/production/v1/aisp
+      tokenUrl: https://bogus.com/authserver/oauth/token
+      authorizationBaseUrl: https://bogus.com/authserver/oauth/authorize
+      paginationLimit: 1000
+  stet:
+    lclgroup:
+      lcl:
+        paginationLimit: 1000
+        registrationUrl: https://bogus.com/third-party-onboarding/v1/third-party
+        regions:
+          - code: LCL
+            name: "LCL"
+            baseUrl: https://bogus.com/psd2/v2
+            tokenUrl: https://bogus.com/token
+            authUrl: https://bogus.com/authorize
+    bnpparibasfortisgroup:
+      bnpparibasfortis:
+        paginationLimit: 1000
+        registrationUrl: https://bogus.com/third-party-onboarding/v1/third-party
+        regions:
+          - code: BNPPF
+            name: "BNP Paribas Fortis"
+            baseUrl: https://bogus.com/psd2/v2
+            tokenUrl: https://bogus.com/token
+            authUrl: https://bogus.com/authorize
+    bnpparibasgroup:
+      bnpparibas:
+        paginationLimit: 1000
+        registrationUrl: https://api-nav.sandbox.bddf.bnpparibas/as/psd2-sandbox/register
+        regions:
+          - code: BNP_PARIBAS
+            name: "Bnp Paribas"
+            baseUrl: https://api.sandbox.bddf.bnpparibas/psd2-sandbox/retail/V1.4
+            tokenUrl: https://api.sandbox.bddf.bnpparibas/psd2-sandbox/retail/token
+            authUrl: https://api-nav.sandbox.bddf.bnpparibas/psd2-sandbox/retail/authorize
+      hellobank:
+        paginationLimit: 1000
+        registrationUrl: https://api-nav.sandbox.bddf.bnpparibas/as/psd2-sandbox/register
+        regions:
+          - code: HELLO_BANK
+            name: "Hello Bank"
+            baseUrl: https://api-psd2.sandbox.bddf.bnpparibas/psd2-sandbox/hellobank/V1.4
+            tokenUrl: https://api-psd2.sandbox.bddf.bnpparibas/psd2-sandbox/hellobank/V1.4/token
+            authUrl: https://api-psd2.sandbox.bddf.bnpparibas/psd2-sandbox/hellobank/V1.4/authorize
+    labanquepostalegroup:
+      labanquepostale:
+        paginationLimit: 1000
+        registrationUrl: https://bogus.com/register
+        regions:
+          - code: LBP
+            name: "La Banque Postale"
+            baseUrl: https://bogus.com/v1
+            tokenUrl: https://bogus.com/token
+            authUrl: https://bogus.com/authorize
+    creditagricolegroup:
+      creditagricole:
+        paginationLimit: 1000
+        registrationUrl: https://bogus.com/psd2_actor_registration/v1/tpp_consumers
+        formStepExpiryDurationMillis: 3600000
+        regions:
+          - code: CAM_ALPES_PROVENCE
+            name: "Alpes Provence"
+            baseUrl: https://bogus.com/psd2-api.ca-alpesprovence.fr/dsp2/v1
+            tokenUrl: https://bogus.com/psd2-api.ca-alpesprovence.fr/authentication/v1/openid/token
+            authUrl: https://bogus.com/ca-alpesprovence/authorize
+          - code: CAM_ALSACE_VOSGES
+            name: "Alsace-Vosges"
+            baseUrl: https://bogus.com/psd2-api.ca-alsace-vosges.fr/dsp2/v1
+            tokenUrl: https://bogus.com/psd2-api.ca-alsace-vosges.fr/authentication/v1/openid/token
+            authUrl: https:/bogus.com/ca-alsace-vosges/authorize
+    boursoramagroup:
+      boursorama:
+        pagination-limit: 500
+        regions:
+          - code: BOURSORAMA
+            name: "Boursorama"
+            baseUrl: https://bogus.com
+            tokenUrl: https://bogus.com/services/api/v1.7/_public_/authentication/oauth/
+            authUrl: https://bogus.com/authorization/
+    cicgroup:
+      cic:
+        pagination-limit: 500
+        registrationUrl: https://bogus.com/cic/oauth2/registrations
+        regions:
+          - code: CIC
+            name: "Crédit Industriel et Commercial"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/cic/oauth2/token
+            authUrl: https://bogus.com/oauth2/fr/banque/oauth2_authorization.aspx
+      creditmutuel:
+        pagination-limit: 500
+        registrationUrl: https://bogus.com/cm/oauth2/registrations
+        regions:
+          - code: CREDITMUTUEL
+            name: "Credit Mutuel"
+            baseUrl: https://bogus.com
+            tokenUrl: https://bogus.com/cm/oauth2/token
+            authUrl: https://bogus.com/oauth2/fr/banque/oauth2_authorization.aspx
+      beobank:
+        pagination-limit: 500
+        registrationUrl: https://bogus.com/beobank/oauth2/registrations
+        regions:
+          - code: BEOBANK
+            name: "Beobank"
+            baseUrl: https://bogus.com
+            tokenUrl: https://bogus.com/beobank/oauth2/token
+            authUrl: https://bogus.com/oauth2/fr/banque/oauth2_authorization.aspx
+    cmarkeagroup:
+      fortuneo:
+        regions:
+          - code: FORTUNEO
+            name: "Fortuneo Banque"
+            authUrl: https://bogus.com/authorize
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+        pagination-limit: 500
+      axa:
+        regions:
+          - code: AXA_BANQUE
+            name: "AXA_BANQUE"
+            authUrl: https://bogus.com/authorize
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+        pagination-limit: 500
+      allianzbanque:
+        regions:
+          - code: ALLIANZ_BANQUE
+            name: "Allianz Banque"
+            authUrl: https://bogus.com/authorize
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+        pagination-limit: 500
+      arkeabanqueentreprises:
+        pagination-limit: 500
+        regions:
+          - code: ARKEA_BANQUE_ENTREPRISES
+            name: "Arkéa Banque Entreprises et Institutionnels"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+            authUrl: https://bogus.com/authorize
+      arkeabanqueprivee:
+        pagination-limit: 500
+        regions:
+          - code: ARKEA_BANQUE_PRIVEE
+            name: "Arkéa Banque Privée"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+            authUrl: https://bogus.com/authorize
+      arkeabankingservices:
+        pagination-limit: 500
+        regions:
+          - code: ARKEA_BANKING_SERVICES
+            name: "Arkéa Banking Services"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+            authUrl: https://bogus.com/authorize
+      bpe:
+        pagination-limit: 500
+        regions:
+          - code: BPE_BANK
+            name: "BPE"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+            authUrl: https://bogus.com/authorize
+      creditmutueldebretagne:
+        pagination-limit: 500
+        regions:
+          - code: CREDIT_MUTUEL_DE_BRETAGNE
+            name: "Crédit Mutuel de Bretagne"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+            authUrl: https://bogus.com/authorize
+      creditmutueldusudouest:
+        pagination-limit: 500
+        regions:
+          - code: CREDIT_MUTUEL_DU_SUD_OUEST
+            name: "Crédit Mutuel du Sud-Ouest"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+            authUrl: https://bogus.com/authorize
+      maxbank:
+        pagination-limit: 500
+        regions:
+          - code: MAX_BANK
+            name: "Max"
+            baseUrl: https://bogus.com/
+            tokenUrl: https://bogus.com/oauth-authorizationcode-psd2/token
+            authUrl: https://bogus.com/authorize
+    societegeneralegroup:
+      pri:
+        pagination-limit: 500
+        regions:
+          - code: SOCIETE_GENERALE_PRI
+            name: "Societe Generale Particuliers"
+            baseUrl: https://mtls.api.societegenerale.fr/sg/prod/pri/v1.4.2.17/psd2/xs2a
+            tokenUrl: https://mtls.sg-signin.sb.societegenerale.fr/oauth2/token
+            authUrl: https://particuliers.sg-signin.sb.societegenerale.fr/oauth2/authorize
+      pro:
+        pagination-limit: 500
+        regions:
+          - code: SOCIETE_GENERALE_PRO
+            name: "Societe Generale Professionnels"
+            baseUrl: https://mtls.api.societegenerale.fr/sg/prod/pro/v1.4.2.4/psd2/xs2a
+            tokenUrl: https://mtls.sg-signin.sb.societegenerale.fr/oauth2/token
+            authUrl: https://professionnels.sg-signin.sb.societegenerale.fr/oauth2/authorize
+      ent:
+        pagination-limit: 500
+        regions:
+          - code: SOCIETE_GENERALE_ENT
+            name: "Societe Generale Entreprises"
+            baseUrl: https://mtls.api.societegenerale.fr/sg/prod/ent/v1.4.2.4/psd2/xs2a
+            tokenUrl: https://mtls.sg-signin.sb.societegenerale.fr/oauth2/token
+            authUrl: https://entreprises.sg-signin.sb.societegenerale.fr/oauth2/authorize
+      creditdunord:
+        pagination-limit: 500
+        regions:
+          - code: CREDIT_DU_NORD
+            name: "Crédit du Nord"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      banquecourtois:
+        pagination-limit: 500
+        regions:
+          - code: BANQUE_COURTOIS
+            name: "Banque Courtois"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      banquekolb:
+        pagination-limit: 500
+        regions:
+          - code: BANQUE_KOLB
+            name: "Banque Kolb"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      banquelaydernier:
+        pagination-limit: 500
+        regions:
+          - code: BANQUE_LAYDERNIER
+            name: "Banque Laydernier"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      banquenuger:
+        pagination-limit: 500
+        regions:
+          - code: BANQUE_NUGER
+            name: "Banque Nuger"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      banquerhonealpes:
+        pagination-limit: 500
+        regions:
+          - code: BANQUE_RHONE_ALPES
+            name: "Banque Rhône-Alpes"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      banquetarneaud:
+        pagination-limit: 500
+        regions:
+          - code: BANQUE_TARNEAUD
+            name: "Banque Tarneaud"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      societedebanquemonaco:
+        pagination-limit: 500
+        regions:
+          - code: SOCIETE_DE_BANQUE_MONACO
+            name: "Société de Banque Monaco"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+      societemarseillaisedecredit:
+        pagination-limit: 500
+        regions:
+          - code: SOCIETE_MARSEILLAISE_DE_CREDIT
+            name: "Société Marseillaise de Crédit"
+            baseUrl: https://bogus.com/cdn/prod/v1.4.2.17.1/psd2/aisp
+            tokenUrl: https://bogus.com/oauth2/token
+            authUrl: https://bogus.com/oauth2/authorize
+    bpcegroup:
+      banquepopulaire:
+        paginationLimit: 1000
+        formStepExpiryDurationMillis: 3600000
+        registration-url: https://www.bogus.com/stet/setting/v1/register # Registration url must be equal to first region
+        regions:
+          - code: BPBFC
+            name: "B.P Bourgogne Franche Comté"
+            baseUrl: https://www.bogus.com
+            tokenUrl: https://www.bogus.com/stet/psd2/oauth/token
+            authUrl: https://www.bogus.com/stet/psd2/oauth/authorize
+          - code: BPAURA
+            name: "B.P AUvergne et Rhône-Alpes"
+            baseUrl: https://www.bogus.com
+            tokenUrl: https://www.bogus.com/stet/psd2/oauth/token
+            authUrl: https://www.bogus.com/stet/psd2/oauth/authorize
+      caissedepargneparticuliers:
+        paginationLimit: 1000
+        formStepExpiryDurationMillis: 3600000
+        registration-url: https://www.bogus.com/stet/setting/v1/register # Registration url must be equal to first region
+        regions:
+          - code: CEPAC
+            name: "Caisse d'Epargne Provence Alpes Corse"
+            baseUrl: https://www.bogus.com
+            tokenUrl: https://www.bogus.com/stet/psd2/oauth/token
+            authUrl: https://www.bogus.com/stet/psd2/oauth/authorize
+          - code: CEN
+            name: "Caisse d'Epargne Normandie"
+            baseUrl: https://www.bogus.com
+            tokenUrl: https://www.bogus.com/stet/psd2/oauth/token
+            authUrl: https://www.bogus.com/stet/psd2/oauth/authorize
+  consorsbankgroup:
+    consorsbank:
+      base-url: https://bogus.com
+  direkt1822group:
+    direkt1822:
+      base-url: https://bogus.com
+      pagination-limit: 500
+  alpha:
+    alphabankromania:
+      baseUrl: https://bogus.com
+      oAuthAuthorizationUrl: https://bogus.com
+      bankId: x-ab-bank-id
+  virginmoney2group:
+    virginmoney2:
+      pagination-limit: 1000
+      baseUrl: https://bogus.com
+      registrationUrl: https://bogus.com/v3.2/register
+      registrationAudience: registrationAudience
+      oAuthTokenUrl: https://bogus.com/v3.0/oauth2/token
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+  argentagroup:
+    argenta:
+      base-url: https://bogus.com
+      paginationLimit: 500
+  axagroup:
+    axabe:
+      base-url: https://bogus.com
+      authorization-base-url: https://bogus.com/public
+      transactionsPaginationLimit: 100
+    bpost:
+      base-url: https://bogus.com
+      authorization-base-url: https://bogus.com/public
+      transactionsPaginationLimit: 100
+    crelan:
+      base-url: https://bogus.com
+      authorization-base-url: https://bogus.com/public
+      transactionsPaginationLimit: 100
+    comdirect:
+      base-url: https://bogus.com
+      authorization-base-url: https://bogus.com/public
+      transactionsPaginationLimit: 100
+    keytrade:
+      base-url: https://bogus.com
+      authorization-base-url: https://bogus.com/public
+      transactionsPaginationLimit: 100
+  fabricgroup:
+    bancasella:
+      base-url: https://bogus.com
+      onboarding-base-url: https://bogus.com
+  brdgroup:
+    brd:
+      baseUrl: https://bogus.com/brd-api-connect-prod-organization/apicatalog/brd-psd2-aisp-prod
+      paginationLimit: 100
+      corePoolSize: 2
+      consentStatusPollingInitialDelayInSeconds: 30
+      consentStatusPollingTotalDelayLimitInSeconds: 600
+  gruppocedacri:
+    bancamediolanum:
+      baseUrl: https://bogus.com/psd2/v1.2/bg/03062
+      tokenUrl: https://bogus.com:9090/oauth/token
+      registrationUrl: https://bogus.com/psd2/v1/tpp
+      paginationLimit: 100
+  raiffeisenbank:
+    ro:
+      baseUrl: https://bogus.com
+      oAuthBaseUrl: https://bogus.com
+      paginationLimit: 100
+  commerzbankgroup:
+    commerzbank:
+      baseUrl: https://bogus.com
+      authorizationUrl: https://bogus.com
+      paginationLimit: 100
+  olbgroup:
+    olb:
+      baseUrl: https://bogus.com
+      paginationLimit: 100
+  atruviagroup:
+    volksbankenraiffeisen:
+      regionalBankList:
+        - code: 82064188
+          bic: GENODEF1WE1
+          name: "VR Bank Weimar eG"
+          baseUrl: https://www.bogus.com
+        - code: 21762550
+          bic: GENODEF1HUM
+          name: "VR Bank Westküste eG"
+          baseUrl: https://www.bogus.com
+  bankvanbredagroup:
+    bankvanbreda:
+      baseUrl: https://bogus.com
+      paginationLimit: 100
+  raiffeisenatgroup:
+    raiffeisenat:
+      baseUrl: https://bogus.com
+      tokenUrl: https://bogus.com
+      registrationUrl: https://bogus.com
+      paginationLimit: 100
+  cecgroup:
+    cec:
+      baseUrl: https://bogus.com
+      paginationLimit: 100
+  libragroup:
+    libra:
+      baseUrl: https://bogus.com
+      oAuthBaseUrl: https://bogus.com
+      paginationLimit: 100
+  chebancagroup:
+    chebanca:
+      baseUrl: https://bogus.com
+      tokenUrl: https://bogus.com
+      authorizeUrl: https://bogus.com
+      paginationLimit: 100
+  qontogroup:
+    qonto:
+      baseUrl: https://bogus.com
+      tokenUrl: https://bogus.com
+      authorizationUrl: https://bogus.com
+      paginationLimit: 100
+  kbciegroup:
+    kbcie:
+      paginationLimit: 1000
+      baseUrl: https://bogus.com/
+      oAuthTokenUrl: https://bogus.com/oauth-token
+      oAuthAuthorizationUrl: https://bogus.com/authorize
+      registrationUrl: https://bogus.com/register
+  sebaggroup:
+    sebag:
+      baseUrl: https://bogus.com
+      tokenUrl: https://bogus.com
+      authorizationUrl: https://bogus.com
+      paginationLimit: 100
+  handelsbankengroup:
+    handelsbankennl:
+      paginationLimit: 1000
+      baseUrl: https://api.bogus.com
+      authorizationUrl: https://secure.bogus.com/bb/gls5/oauth2/authorize/1.0
+
+# Archived providers
+#  # To be filled when we start productionize steps
+#  ceska:
+#    #    oauth2ClientId: TO_OVERRIDE
+#    #    oauth2ApiSecret: TO_OVERRIDE
+#    oauth2AuthorizationBaseUrl: https://bezpecnost.csas.cz/mep/fs/fl/oauth2/
+#    oauth2TokenUrl: https://bezpecnost.csas.cz/mep/fs/fl/oauth2/token/axa
+#    webApiKeyHeaderName: web-api-key
+#    webApiKeyHeaderValue: 1dface5a-86c3-4cd1-8703-7d46945174c1
+#    baseUrl: https://www.csas.cz/webapi/api/v1/account-information/my/accounts/
+#    paginationLimit: 1000
+#    # By default to staging. It is possible to switch to yoltbank.
+#  polishapimockbank:
+#    baseUrl: http://yoltbank/yoltbank/polishapi
+#    customerAuthorizationUrl: http://yoltbank/yoltbank/polishapi/authorize
+#    customerTokenUrl: http://yoltbank/yoltbank/polishapi/token
+#    paginationLimit: 1000
+#    maxPageSize: 100
+#    asyncFetch:
+#      corePoolSize: 10
+#      callTimeoutInSec: 60
+#  chip:
+#    base-url: https://api.getchip.tech
+#    oAuthEndpoint: /oauth
+#    createTokenEndpoint: /oauth/token
+#    refreshTokenEndpoint: /oauth/refresh
+#    userInfoEndpoint: /me
+#    certificatePinning:
+#      - hostname: api.getchip.tech
+#        chain:
+#          - sha256/z3soVycbyqo6nML5Tc+ffE8n+Ifu78I40qrfIhITK/M=
+
+rawdata:
+  logging:
+    enabled: false
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failureRateThreshold: 80
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 30000
+        permittedNumberOfCallsInHalfOpenState: 6
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: 60000
+        slidingWindowType: TIME_BASED
+        slidingWindowSize: 600
+        ignoreExceptions:
+          - com.yolt.providers.common.exception.PaymentCancelledException
+          - com.yolt.providers.common.exception.ConfirmationRequestFailedException
+          - com.yolt.providers.common.exception.FlowNotSupportedException
+          - com.yolt.providers.common.exception.InvalidAuthenticationMeansException
+          - com.yolt.providers.common.exception.MissingAuthenticationMeansException
+          - com.yolt.providers.web.circuitbreaker.ProvidersNonCircuitBreakingTokenInvalidException
+          - com.yolt.providers.budgetinsight.circuitbreaker.ProvidersCircuitBreakerNotTrippingException
+          - com.yolt.providers.budgetinsight.circuitbreaker.ProvidersCircuitBreakerNotTrippingWithResponseException
+      AMEX-fetchData:
+        slidingWindowSize: 200
+      BARCLAYS-fetchData:
+        slidingWindowSize: 180
+      DANSKEBANK-fetchData:
+        slidingWindowSize: 160
+      FIRSTDIRECT-fetchData:
+        slidingWindowSize: 360
+      HSBC-fetchData:
+        slidingWindowSize: 360
+      KNABBANKNL-fetchData:
+        slidingWindowSize: 180
+      MARKSANDSPENCER-fetchData:
+        slidingWindowSize: 360
+      SANTANDER-fetchData:
+        slidingWindowSize: 200
+      BUDGETINSIGHT-deleteconnection:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 10
+        slidingWindowSize: 1200
+      BUDGETINSIGHT-deleteuser:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 10
+        slidingWindowSize: 1200
+      BUDGETINSIGHT-fetchcategories:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 10
+        slidingWindowSize: 1200
+      BUDGETINSIGHT-fetchsite:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 10
+        slidingWindowSize: 12000
+      BUDGETINSIGHT-getexternaluserid:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 3
+        slidingWindowSize: 600
+      BUDGETINSIGHT-postnewconnection:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 10
+        slidingWindowSize: 1200
+      BUDGETINSIGHT-postnewuser:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 10
+        slidingWindowSize: 1200
+      BUDGETINSIGHT-refreshusersite:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 3
+        slidingWindowSize: 600
+      BUDGETINSIGHT-updateconnection:
+        failureRateThreshold: 80
+        minimumNumberOfCalls: 10
+        slidingWindowSize: 1200
+  thread-pool-bulkhead:
+    configs:
+      default:
+        coreThreadPoolSize: 2
+        maxThreadPoolSize: 40
+        queueCapacity: 1
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 600000

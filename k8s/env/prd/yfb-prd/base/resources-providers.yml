@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: providers
+spec:
+  template:
+    spec:
+      containers:
+        - name: providers
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 50m # typical usage on prd, 25m on yfb-acc performance test
+              memory: 1200Mi

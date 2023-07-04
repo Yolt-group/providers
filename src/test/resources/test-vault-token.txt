@@ -1,0 +1,1 @@
+This is used for testing purposes. Vault needs to have a token on filesystem.

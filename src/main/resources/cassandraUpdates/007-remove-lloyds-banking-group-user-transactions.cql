@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS lloyds_banking_group_user_transactions;

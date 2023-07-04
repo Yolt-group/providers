@@ -1,0 +1,47 @@
+environment: team4
+
+spring:
+  data:
+    cassandra:
+      keyspace-name: ycs_providers
+      contact-points: cassa.team4.yolt.io
+      datacenter-name: eu-central-1b
+      username: cassandra
+      password: cassandra
+      port: 9142
+  kafka:
+    bootstrap-servers: kafka.team4.yolt.io:9093
+    properties:
+      security:
+        protocol: "SSL"
+    consumer:
+      group-id: ycs_providers
+yolt:
+  deployment:
+    environment: "team4"
+    namespace: "ycs"
+  kafka:
+    broker:
+      addresses: kafka.team4.yolt.io:9093
+    topics:
+      ingestion-requests:
+        topic-name: ycs_ingestionRequest
+        listener-concurrency: 1
+lovebird:
+  openbanking:
+    baseUrl: https://ingress.team4.yolt.io/yoltbank/openbanking
+    baseUrlPin: sha1/4S1vkdD/BiGQDKwx8xwoZ3j8gQo=
+    oAuthTokenUrl: https://ingress.team4.yolt.io/yoltbank/openbanking/token
+    oAuthTokenUrlPin: sha1/4S1vkdD/BiGQDKwx8xwoZ3j8gQo=
+    customerAuthorizationUrl: https://ingress.team4.yolt.io/yoltbank/openbanking/authorize
+    oAuthAuthorizationUrl: https://ingress.team4.yolt.io/ycs/yoltbank/openbanking/authorize
+  yoltprovider:
+    baseUrl: https://ingress.team4.yolt.io/yoltbank/yoltprovider
+    baseUrlPin: sha1/KSIl5WzfUZO/4+GlP/ynHa6wdPo=
+    customerAuthorizationUrl: https://ingress.team4.yolt.io/yoltbank/yoltprovider/authorize
+
+service:
+  crypto:
+    url: https://ingress.team4.yolt.io/crypto
+  tokens:
+    url: https://ingress.team4.yolt.io/tokens

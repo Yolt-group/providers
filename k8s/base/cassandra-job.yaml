@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: providers-cassa
+  labels:
+    team: c4po
+    git.yolt.io/group: providers
+    git.yolt.io/project: providers
+    git.yolt.io/tag: $(TAG)
+    yolt.io/config-server-tag: $(CONFIG_SERVER_TAG)
+spec:
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        vault.hashicorp.com/agent-inject-secret-cassandra: $(ENVIRONMENT)/database/cassa/creds/$(CASSANDRA_NAMESPACE_PREFIX)providers
+        vault.hashicorp.com/auth-path: "auth/$(ENVIRONMENT)/k8s/eks/pods/$(NAMESPACE)"
+        vault.hashicorp.com/role: providers
+        ca-certificates.yolt.io/inject: "true"
+      labels:
+        team: c4po
+    spec:
+      containers:
+        - env:
+            - name: keyspace
+              value: $(CASSANDRA_NAMESPACE_PREFIX)providers
+            - name: cassandraNode
+              valueFrom:
+                configMapKeyRef:
+                  key: spring_data_cassandra_contact_points
+                  name: cassandra
+            - name: cqlDir
+              value: /cassandraUpdates
+            - name: namespace
+              value: $(NAMESPACE)
+          image: $(DOCKER_REGISTRY)/providers-cassa:$(DOCKER_TAG)
+          name: providers-cassa
+      restartPolicy: Never
+      serviceAccountName: providers
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 0

@@ -1,0 +1,49 @@
+spring:
+  kafka:
+    consumer:
+      group-id: ycs_providers
+    bootstrap-servers: 10.18.0.32:9093
+    properties:
+      security:
+        protocol: "SSL"
+    listener:
+      missing-topics-fatal: false
+  data:
+    cassandra:
+      contact-points: cassa.team9.yolt.io
+      keyspace-name: ycs_providers
+      username: cassandra
+      password: cassandra
+      port: 9142
+yolt:
+  deployment:
+    environment: "team9"
+  kafka:
+    topics:
+      ingestion-requests:
+        topic-name: ycs_ingestionRequest
+        listener-concurrency: 1
+    broker:
+      addresses: 10.18.0.32:9093
+lovebird:
+  kafka:
+    accountAndTransactionsErrorsTopic: ycs_ingestionRequestsErrors
+    accountAndTransactionsTopic: ycs_ingestionRequest
+    activityEvents:
+      topic: ycs_activityEvents
+    activityEventsTopic: ycs_activityEvents
+    broker:
+      addresses: 10.18.0.32:9093
+  openbanking:
+    baseUrl: https://ingress.ycs.team9.yolt.io/yoltbank/openbanking
+    baseUrlPin: sha1/4S1vkdD/BiGQDKwx8xwoZ3j8gQo=
+    oAuthTokenUrl: https://ingress.ycs.team9.yolt.io/yoltbank/openbanking/token
+    oAuthTokenUrlPin: sha1/4S1vkdD/BiGQDKwx8xwoZ3j8gQo=
+    customerAuthorizationUrl: https://ingress.ycs.team9.yolt.io/yoltbank/openbanking/authorize
+    oAuthAuthorizationUrl: https://ingress.ycs.team9.yolt.io/yoltbank/openbanking/authorize
+  ingnl:
+    baseUrl: https://yoltbank.team9.yolt.io/yoltbank/ing-nl
+    certificatePinning:
+      - hostname: yoltbank.team9.yolt.io
+        chain:
+          - sha256/2zJ/63OIhLooe4jHBcqidFedlRIQfQNbnBP8FYqmNo0=

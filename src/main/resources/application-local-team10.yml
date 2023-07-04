@@ -1,0 +1,37 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka.team10.yolt.io:9093
+    properties:
+      security:
+        protocol: "SSL"
+  data:
+    cassandra:
+      contact-points: cassa.team10.yolt.io
+      datacenter-name: eu-central-1b
+      username: cassandra
+      password: cassandra
+      port: 9142
+yolt:
+  deployment:
+    environment: "team10"
+  kafka:
+    broker:
+      addresses: kafka.team10.yolt.io:9093
+lovebird:
+  openbanking:
+    baseUrl: https://ingress.team10.yolt.io/yoltbank/openbanking
+    baseUrlPin: sha1/yPQwciXdhCb4zgQMmQkZSqYVD/o=
+    oAuthTokenUrl: https://ingress.team10.yolt.io/yoltbank/openbanking/token
+    oAuthTokenUrlPin: sha1/yPQwciXdhCb4zgQMmQkZSqYVD/o=
+    customerAuthorizationUrl: https://ingress.team10.yolt.io/yoltbank/openbanking/authorize
+    oAuthAuthorizationUrl: https://ingress.team10.yolt.io/yoltbank/openbanking/authorize
+  yoltprovider:
+    baseUrl: https://ingress.team10.yolt.io/yoltbank/yoltprovider
+    baseUrlPin: sha1/KSIl5WzfUZO/4+GlP/ynHa6wdPo=
+    customerAuthorizationUrl: https://ingress.team10.yolt.io/yoltbank/yoltprovider/authorize
+
+service:
+  crypto:
+    url: https://ingress.team10.yolt.io/crypto
+  tokens:
+    url: https://ingress.team10.yolt.io/tokens

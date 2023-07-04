@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+  - ../../../../base
+resources:
+  - config-map.yaml
+  - pod-disruption-budget.yaml
+vars:
+  - name: DOCKER_REGISTRY
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.docker_registry
+  - name: ENVIRONMENT
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.environment_name
+  - name: TAG
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.service_tag
+  - name: CONFIG_SERVER_TAG
+    objref:
+      kind: ConfigMap
+      name: providers-kustomize
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.config_server_tag
+  - name: DOCKER_TAG
+    objref:
+      kind: ConfigMap
+      name: "providers-kustomize"
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.docker_tag
+patchesStrategicMerge:
+  - replicas.yaml
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: providers
+    # We do not want to use the CloudHSM on yfb-sandbox.
+    # We can not easily deduplicate it otherwise
+    path: remove-cloudhsm.yaml

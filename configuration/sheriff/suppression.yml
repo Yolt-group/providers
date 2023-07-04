@@ -1,0 +1,3 @@
+suppression:
+  - rule: LogbackIncludeBaseConfigurationRule   # Name of the rule, can be found in rule-configuration.yml
+    files: ".*"   # Any file pattern to match the file to be suppressed should be a valid regular expression

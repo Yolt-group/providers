@@ -1,0 +1,69 @@
+#namespace specific. injected by providers-default/ycs.yml
+yolt:
+  commons:
+    disableMigrationHelpers: true
+  deployment:
+    namespace: "ycs"
+  kafka:
+    consumer-group: ycs_providers
+    topics:
+      clientRedirectUrls:
+        topic-name: ycs_clientRedirectUrls
+        listener-concurrency: 1
+      clientAuthenticationMeans:
+        topic-name: ycs_clientAuthenticationMeans
+      providerAccounts:
+        topic-name: ycs_providerAccounts
+        listener-concurrency: 1
+      formProviderExternalUserIds:
+        topic-name: ycs_formProviderExternalUserIds
+      providerRawData:
+        topic-name: ycs_providerRawData
+        listener-concurrency: 1
+  vault:
+    address: https://vault.yolt.io
+    authentication:
+      service-account-token-file: src/test/resources/test-vault-token.txt
+    kafka:
+      enabled: true
+    secret:
+      enabled: true
+      location: file:///vault/secrets
+    secrets:
+      directory: /vault/secrets
+    cassandra:
+      vault-creds-file: file:///vault/secrets/cassandra
+  providers:
+    cloudHSM:
+      enabled: false
+  truststore:
+    entries:
+  ytsGroup:
+    redirectUrl: https://client-redirect.yts.yolt.io
+cluster:
+  cloudhsm:
+    location: "security-dta"
+
+  sleuth:
+    # as per: https://cloud.spring.io/spring-cloud-sleuth/single/spring-cloud-sleuth.html#_propagating_extra_fields
+    propagation-keys:
+      # Taken from LovebirdRequestBuilder
+      - request_trace_id
+      - cbms-profile-id
+      - service_call_id
+      - user-id
+service:
+  crypto:
+    url: https://ingress.ycs.${environment}.yolt.io/crypto
+  tokens:
+    url: https://ingress.ycs.${environment}.yolt.io/tokens
+
+isp:
+  proxy:
+    host: dummy
+    port: 0
+
+management:
+  server:
+    ssl:
+      key-store: /vault/secrets/keystore.p12

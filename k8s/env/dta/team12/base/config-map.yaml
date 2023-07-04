@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: providers-kustomize
+data:
+  docker_registry: replaced-by-ci
+  environment_name: team12
+  security_target: security-dta
+  service_tag: replaced-by-ci
+  config_server_tag: replaced-by-ci
+  docker_tag: replaced-by-ci

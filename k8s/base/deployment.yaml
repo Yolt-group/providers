@@ -1,0 +1,274 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: providers
+  labels:
+    team: c4po
+    git.yolt.io/group: providers
+    git.yolt.io/project: providers
+    git.yolt.io/tag: $(TAG)
+    yolt.io/config-server-tag: $(CONFIG_SERVER_TAG)
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      name: providers
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /actuator/prometheus
+        prometheus.io/port: "8444"
+        prometheus.io/scheme: https
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-init-first: "true"
+        vault.hashicorp.com/agent-run-as-same-user: "true"
+        vault.hashicorp.com/agent-revoke-on-shutdown: "true"
+        vault.hashicorp.com/agent-revoke-grace: "405"
+        vault.hashicorp.com/role: providers
+        vault.hashicorp.com/agent-cache-enable: "false"
+        vault.hashicorp.com/agent-pre-populate: "true"
+        vault.hashicorp.com/secret-volume-path: /vault/secrets
+        vault.hashicorp.com/auth-path: "auth/$(ENVIRONMENT)/k8s/eks/pods/$(NAMESPACE)"
+        vault.hashicorp.com/agent-limits-cpu: 1000m
+        vault.hashicorp.com/agent-limits-mem: 128Mi
+        vault.hashicorp.com/agent-requests-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 24Mi
+        vault.hashicorp.com/agent-inject-secret-cert: ""
+        vault.hashicorp.com/agent-inject-template-cert: |
+          {{ with secret "$(ENVIRONMENT)/k8s/pods/$(NAMESPACE)/pki/issue/providers" "common_name=providers" }}
+          {{- .Data.certificate -}}
+          {{ end }}
+        vault.hashicorp.com/agent-inject-secret-private_key: ""
+        vault.hashicorp.com/agent-inject-template-private_key: |
+          {{ with secret "$(ENVIRONMENT)/k8s/pods/$(NAMESPACE)/pki/issue/providers" "common_name=providers" }}
+          {{- .Data.private_key -}}
+          {{ end }}
+        vault.hashicorp.com/agent-inject-secret-issuing_ca: ""
+        vault.hashicorp.com/agent-inject-template-issuing_ca: |
+          {{ with secret "$(ENVIRONMENT)/k8s/pods/$(NAMESPACE)/pki/issue/providers" "common_name=providers" }}
+          {{- .Data.issuing_ca -}}
+          {{ end }}
+        vault.hashicorp.com/agent-inject-command-cert: openssl pkcs12 -export -in /vault/secrets/cert -inkey /vault/secrets/private_key -out /vault/secrets/keystore.p12 -name keystore -passout pass:dontchangeit
+        vault.hashicorp.com/agent-inject-command-private_key: openssl pkcs12 -export -in /vault/secrets/cert -inkey /vault/secrets/private_key -out /vault/secrets/keystore.p12 -name keystore -passout pass:dontchangeit
+        vault.hashicorp.com/client-max-retries: "4"
+        vault.hashicorp.com/agent-inject-secret-kafka_private_key: ""
+        vault.hashicorp.com/agent-inject-template-kafka_private_key: |
+          {{ with secret "$(ENVIRONMENT)/kafka/issue/providers" "common_name=providers" }}
+          {{- .Data.private_key -}}
+          {{ end }}
+        vault.hashicorp.com/agent-inject-secret-kafka_issuing_ca: ""
+        vault.hashicorp.com/agent-inject-template-kafka_issuing_ca: |
+          {{ with secret "$(ENVIRONMENT)/kafka/issue/providers" "common_name=providers" }}
+          {{- .Data.issuing_ca -}}
+          {{ end }}
+        vault.hashicorp.com/agent-inject-secret-kafka_cert: ""
+        vault.hashicorp.com/agent-inject-template-kafka_cert: |
+          {{ with secret "$(ENVIRONMENT)/kafka/issue/providers" "common_name=providers" }}
+          {{- .Data.certificate -}}
+          {{ end }}
+        vault.hashicorp.com/agent-inject-secret-cassandra: $(ENVIRONMENT)/database/cassa/creds/$(CASSANDRA_NAMESPACE_PREFIX)providers
+        vault.hashicorp.com/agent-inject-secret-aws: "aws"
+        vault.hashicorp.com/agent-inject-template-aws: |
+          {{- with secret "aws/creds/$(ENVIRONMENT)-cloudhsm-discovery" -}}
+          [default]
+          region=eu-central-1
+          aws_access_key_id={{ .Data.access_key }}
+          aws_secret_access_key={{ .Data.secret_key }}
+          aws_session_token={{ .Data.security_token }}
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-cloudhsm-client.crt: "cloudhsm-client.crt"
+        vault.hashicorp.com/agent-inject-template-cloudhsm-client.crt: |
+          {{- with secret "$(SECURITY_TARGET)/cloudhsm/issue/client" "common_name=providers" -}}
+          {{ .Data.certificate }}{{- end -}}
+        vault.hashicorp.com/preserve-secret-case-cloudhsm-customerCA.crt: "true"
+        vault.hashicorp.com/agent-inject-secret-cloudhsm-customerCA.crt: "cloudhsm-customerCA.crt"
+        vault.hashicorp.com/agent-inject-template-cloudhsm-customerCA.crt: |
+          {{- with secret "$(SECURITY_TARGET)/cloudhsm/issue/client" "common_name=providers" -}}
+          {{ .Data.issuing_ca }}{{- end -}}
+        vault.hashicorp.com/agent-inject-secret-cloudhsm-client.key: "cloudhsm-client.key"
+        vault.hashicorp.com/agent-inject-template-cloudhsm-client.key: |
+          {{- with secret "$(SECURITY_TARGET)/cloudhsm/issue/client" "common_name=providers" -}}
+          {{ .Data.private_key }}{{- end -}}
+        ca-certificates.yolt.io/inject: "true"
+      labels:
+        team: c4po
+        serving: "true"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: name
+                      operator: In
+                      values:
+                        - providers
+                topologyKey: topology.kubernetes.io/zone
+      containers:
+        - env:
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CLUSTER_CLOUDHSM_LOCATION
+              valueFrom:
+                configMapKeyRef:
+                  key: security_target
+                  name: cluster
+            - name: ENVIRONMENT
+              value: $(ENVIRONMENT)
+            - name: YOLT_VAULT_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  key: yolt_vault_address
+                  name: vault
+            - name: SPRING_CLOUD_CONFIG_ENABLED
+              value: "true"
+            - name: SPRING_PROFILES_ACTIVE
+              value: $(ENVIRONMENT),$(NAMESPACE),$(ENVIRONMENT)-$(NAMESPACE)
+            - name: SPRING_CLOUD_CONFIG_LABEL
+              value: $(CONFIG_SERVER_TAG)
+          envFrom:
+            - configMapRef:
+                name: cassandra
+            - configMapRef:
+                name: vault
+            - configMapRef:
+                name: kafka
+          image: $(DOCKER_REGISTRY)/providers:$(DOCKER_TAG)
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - sleep 10
+          livenessProbe:
+            httpGet:
+              path: actuator/health/liveness
+              port: 8444
+              scheme: HTTPS
+            initialDelaySeconds: 240
+            timeoutSeconds: 1
+          name: providers
+          ports:
+            - containerPort: 8443
+          readinessProbe:
+            failureThreshold: 1
+            httpGet:
+              path: actuator/health/readiness
+              port: 8444
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 2Gi
+            requests:
+              cpu: 50m # typical usage on prd, 25m on yfb-acc performance test
+              memory: 1200Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 100
+          volumeMounts:
+            - mountPath: /tmp/yolt
+              name: vault-kafka-volume
+            - mountPath: /tmp
+              name: tmp-volume
+            - mountPath: /opt/cloudhsm/etc
+              name: cloudhsm-etc
+            - mountPath: /opt/cloudhsm/var
+              name: cloudhsm-var
+      initContainers:
+        - command:
+            - sh
+            - -c
+            - |
+              set -e
+              HSM_ADDRESSES=$(
+                  aws cloudhsmv2 --filters=states=ACTIVE --output=json describe-clusters \
+                  | jq -r '.Clusters
+                  | sort_by(.CreateTimestamp)
+                  | .[0].Hsms
+                  | map(select (.State == "ACTIVE"))
+                  | map(.EniIp)
+                  | join(" ")' \
+              )
+              /opt/cloudhsm/bin/configure-jce -a $HSM_ADDRESSES \
+                --log-type file \
+                --log-file /opt/cloudhsm/var/log/cloudhsm-jce.log \
+                --log-rotation daily \
+                --log-level error \
+                --disable-validate-key-at-init \
+                "$([ $(echo $HSM_ADDRESSES | wc -w) -lt 2 ] && echo "--disable-key-availability-check" || echo "--enable-key-availability-check" )" \
+                --hsm-ca-cert /vault/secrets/cloudhsm-customerCA.crt \
+                --server-client-key-file /vault/secrets/cloudhsm-client.key \
+                --server-client-cert-file /vault/secrets/cloudhsm-client.crt
+
+              echo "Configured jce with $HSM_ADDRESSES"
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              value: providers
+            - name: AWS_SHARED_CREDENTIALS_FILE
+              value: /vault/secrets/aws
+            - name: HTTPS_PROXY
+              value: squid.$(ENVIRONMENT).yolt.io:3128
+          image: $(DOCKER_REGISTRY)/providers:$(DOCKER_TAG)
+          imagePullPolicy: Always
+          name: configure-jce
+          resources:
+            limits:
+              memory: 150Mi
+            requests:
+              memory: 50Mi
+              cpu: 10m
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 100
+          volumeMounts:
+            - mountPath: /opt/cloudhsm/etc
+              name: cloudhsm-etc
+            - mountPath: /opt/cloudhsm/var
+              name: cloudhsm-var
+        - command:
+            - sh
+            - -c
+            - until $(curl --connect-timeout 2 --output /dev/null --silent --head --fail https://config-server/config-server/actuator/health); do echo waiting for config-server; sleep 2; done;
+          image: $(DOCKER_REGISTRY)/providers:$(DOCKER_TAG)
+          name: wait-for-config-server
+          resources:
+            limits:
+              memory: 150Mi
+            requests:
+              memory: 50Mi
+              cpu: 10m
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      serviceAccountName: providers
+      terminationGracePeriodSeconds: 400
+      volumes:
+        - emptyDir: {}
+          name: cloudhsm-etc
+        - emptyDir: {}
+          name: cloudhsm-var
+        - emptyDir: {}
+          name: vault-kafka-volume
+        - emptyDir: {}
+          name: tmp-volume

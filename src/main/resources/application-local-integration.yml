@@ -1,0 +1,39 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka.integration.yolt.io:9093
+    properties:
+      security:
+        protocol: "SSL"
+  data:
+    cassandra:
+      contact-points: cassa.integration.yolt.io
+      datacenter-name: eu-central-1b
+      username: cassandra
+      password: cassandra
+      port: 9142
+yolt:
+  deployment:
+    environment: "integration"
+  kafka:
+    broker:
+      addresses: kafka.integration.yolt.io:9093
+lovebird:
+  openbanking:
+    baseUrl: https://ingress.integration.yolt.io/yoltbank/openbanking
+    baseUrlPin: sha1/4S1vkdD/BiGQDKwx8xwoZ3j8gQo=
+    oAuthTokenUrl: https://ingress.integration.yolt.io/yoltbank/openbanking/token
+    oAuthTokenUrlPin: sha1/4S1vkdD/BiGQDKwx8xwoZ3j8gQo=
+    customerAuthorizationUrl: https://ingress.integration.yolt.io/yoltbank/openbanking/authorize
+    oAuthAuthorizationUrl: https://ingress.integration.yolt.io/yoltbank/openbanking/authorize
+  ingnl:
+    baseUrl: https://yoltbank.integration.yolt.io/yoltbank/ing-nl
+    certificatePinning:
+      - hostname: yoltbank.integration.yolt.io
+        chain:
+          - sha256/2zJ/63OIhLooe4jHBcqidFedlRIQfQNbnBP8FYqmNo0=
+
+service:
+  crypto:
+    url: https://ingress.integration.yolt.io/crypto
+  tokens:
+    url: https://ingress.integration.yolt.io/tokens

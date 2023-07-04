@@ -1,0 +1,8 @@
+package com.yolt.providers.web.authenticationmeans;
+
+enum ClientAuthenticationMeansMessageType {
+    CLIENT_AUTHENTICATION_MEANS_UPDATED,
+    CLIENT_AUTHENTICATION_MEANS_DELETED,
+    CLIENT_GROUP_AUTHENTICATION_MEANS_UPDATED,
+    CLIENT_GROUP_AUTHENTICATION_MEANS_DELETED
+}

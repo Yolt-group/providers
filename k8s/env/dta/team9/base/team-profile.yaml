@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: providers
+spec:
+  template:
+    spec:
+      containers:
+        - name: providers
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: team,$(ENVIRONMENT),$(NAMESPACE),$(ENVIRONMENT)-$(NAMESPACE)

@@ -1,0 +1,11 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: providers-pod-disruption-budget
+  labels:
+    name: providers
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      name: providers

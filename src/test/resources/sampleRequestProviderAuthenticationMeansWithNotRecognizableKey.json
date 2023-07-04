@@ -1,0 +1,18 @@
+{
+  "provider": "POLISH_API_MOCK",
+  "redirectUrlIds": [
+    "b23995dd-8e7a-413c-9a0b-b58c795a4b6d"
+  ],
+  "serviceTypes": [
+    "AIS"
+  ],
+  "scopes": [
+    "ACCOUNTS"
+  ],
+  "authenticationMeans": [
+    {
+      "name": "notRecognizableKey",
+      "value": "dmFsdWU="
+    }
+  ]
+}

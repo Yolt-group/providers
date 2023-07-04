@@ -1,0 +1,224 @@
+spring:
+  data:
+    cassandra:
+      contact-points: 127.0.0.1
+      keyspace-name: providers
+      datacenter-name: datacenter1
+      username: cassandra
+      password: cassandra
+
+  cache:
+    type: caffeine
+    cache-names: mutualTLSCache
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=30m
+  kafka:
+    consumer:
+      group-id: providers${random.long} # hack. The application starts up multiple times during integration tests. Multiple listeners (from a stale app context) in same consumer group will steal events.
+  main:
+    allow-bean-definition-overriding: true
+yolt:
+  truststore.entries: []
+  kafka:
+    #namespace specific. injected by providers-default/ycs.yml
+    consumer-group: providers${random.long} # hack. The application starts up multiple times during integration tests. Multiple listeners (from a stale app context) in same consumer group will steal events.
+    broker:
+      addresses: ${spring.embedded.kafka.brokers}
+    topics:
+      ingestion-requests:
+        topic-name: ingestionRequest
+        listener-concurrency: 1
+      clientRedirectUrls:
+        listener-concurrency: 1
+        topic-name: clientRedirectUrlsTestTopic
+      clientAuthenticationMeans:
+        listener-concurrency: 1
+        topic-name: clientAuthenticationMeansTestTopic
+      providerAccounts:
+        listener-concurrency: 1
+        topic-name: providerAccountsTestTopic
+      formProviderExternalUserIds:
+        listener-concurrency: 1
+        topic-name: formProviderExternalUserIds
+      providerRawData:
+        topic-name: providerRawData
+        listener-concurrency: 1
+  vault:
+    enabled: false
+    address: https://my-personal-vault.yolt.io
+    auth:
+      service-account-token-file: src/test/resources/test-vault-token.txt
+    cassandra:
+      enabled: false
+    kafka:
+      enabled: false
+    secret:
+      enabled: true
+      location: classpath:/secrets_local
+
+  deployment:
+    namespace: default
+    environment: "test"
+  providers:
+    transactions:
+      limiter:
+        log:
+          enabled: true
+    connection:
+      maxTotal: 10
+      maxPerRoute: 2
+      validateAfterInactivityInMillis: 60000 # 1 minutes
+      requestTimeoutInMillis: -1 # Infinite
+      connectTimeoutInMillis: -1 # Infinite
+      socketTimeoutInMillis: -1 # Infinite
+    cloudHSM:
+      enabled: false
+  client-token:
+    verification:
+      dryrun: false
+  ytsGroup:
+    redirectUrl: http://example.com
+  externalIpAddress: 127.0.0.1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, metrics, prometheus
+      base-path: /providers/actuator
+  server:
+    port: 8888
+    ssl:
+      enabled: false
+
+versioning:
+  providers:
+    POLISH_API_MOCK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    TEST_IMPL_OPENBANKING_MOCK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    FAKE_TEST_PROVIDER:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+    ING_NL_MOCK:
+      ais:
+        stable: VERSION_1
+        experimental: VERSION_1
+service:
+  siteManagement:
+    url: http://localhost:${wiremock.server.port}/site-management
+  tokens:
+    url: http://localhost:${wiremock.server.port}/tokens
+  accountsAndTransactions:
+    url: http://localhost:${wiremock.server.port}/accounts-and-transactions
+consentTesting:
+  blacklistedAisProviders:
+    - RAISIN
+    - BARCLAYS
+    - CAISSE_DEPARGNE_PARTICULIERS
+    - BANQUE_POPULAIRE
+    - CREDITAGRICOLE
+    - BELFIUS
+    - BCC_CREDITO_COOPERATIVO
+    - KBC_BANK
+    - POSTBANK
+    - DEUTSCHE_BANK
+    - SPARKASSEN
+    - PPS
+    - UNICREDIT_RO
+    - TEST_IMPL_OPENBANKING
+    - PPS_EUR
+    - ROYAL_BANK_OF_SCOTLAND_CORPO
+    - NATWEST_CORPO
+  blacklistedPisProviders:
+
+circuitbreaker:
+  experimentalProviders:
+    - YOLT_PROVIDER
+
+cluster:
+  name: cluster0
+  cloudhsm:
+    location: "security-dta"
+
+lovebird:
+  bbva:
+    oauth2ApiKey: oauth2ApiKey
+    oauth2ApiSecret: oauth2ApiSecret
+    oauth2AuthorizationBaseUrl: oauth2AuthorizationBaseUrl
+    oauth2TokenUrl: oauth2TokenUrl
+  bunq:
+    oAuthTokenUrl: https://www.oauth-token-url.com
+    oAuthAuthorizationBaseUrl: https://www.oauth-authorization-base-url.com
+    baseUrl: https://www.base-url.com
+    ourExternalIpAddress: 127.0.0.0.1
+  monzo:
+    #namespace specific. injected by providers-default/ycs.yml
+    oAuthAuthorizationBaseUrl: https://yoltbank.yolt.io/yoltbank/monzo/yolt-login
+    apiKey: someKey
+    apiSecret: someSecret
+  danske:
+    baseUrl: https://bogus.com
+    oAuthTokenUrl: https://bogus.com
+    oAuthAuthorizationUrl: https://bogus.com
+    client-id: clientIdTest
+    client-secret: clientSecretTest
+    audience: audienceTest
+    certificatePinning:
+      - hostname: bogus.com
+        chain:
+          - sha1/paGQccbVEW0kzG6IaPz5E/wf2zc=
+  starlingbank:
+    apiKey: someKey
+    apiSecret: someSecret
+  ceska:
+    oauth2ClientId: client-id
+    oauth2ApiSecret: api-secret
+    oauth2AuthorizationBaseUrl: bogus.com
+    oauth2TokenUrl: bogus.com
+    webApiKeyHeaderName: web-api-key
+    webApiKeyHeaderValue: 1dface5a-86c3-4cd1-8703-7d46945174c1
+    baseUrl: bogus.com
+    paginationLimit: 1000
+  pensionbee:
+    apiSecret: someSecret
+  wealthify:
+    clientSecret: someSecret
+  bankofireland:
+    transportClientCertificateConfig:
+      file: certificates/fake/fake-keystore.p12
+      password: changeit
+      alias: 1
+    transportTruststoreConfig:
+      file: certificates/fake/fake-keystore.p12
+      password: changeit
+    signingKeyConfig:
+      file: certificates/fake/fake-keystore.p12
+      password: changeit
+      alias: 1
+      id: X
+    institution-id: test
+    audience: audience
+    client-id: someClientId
+    client-secret: someClientSecret
+  formProvider:
+    externalUserIdsSliceLimit: 2
+
+logging:
+  level:
+    org.apache.zookeeper: warn
+    org.apache.kafka: warn
+    org.I0Itec.zkclient: warn
+    kafka.server: warn
+
+isp:
+  proxy:
+    host: dummy
+    port: 0
+
+environment: test

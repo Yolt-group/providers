@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+			<fieldNames>
+				<timestamp>timestamp</timestamp>
+				<version>[ignore]</version>
+			</fieldNames>
+			<!-- Trim long stack traces. Log entries, which are too long, do not appear in Kibana. -->
+			<throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+				<maxDepthPerThrowable>20</maxDepthPerThrowable>
+				<maxLength>4000</maxLength>
+				<shortenedClassNameLength>30</shortenedClassNameLength>
+				<rootCauseFirst>true</rootCauseFirst>
+			</throwableConverter>
+		</encoder>
+		<filter class="nl.ing.lovebird.logging.AddErrorCodeFilter"/>
+	</appender>
+
+	<appender name="SPLITTER" class="com.latch.LengthSplittingAppender">
+		<appender-ref ref="STDOUT"/>
+		<!--  split a message if it's longer than 5 mb. -->
+		<maxLength>5000000</maxLength>
+		<sequenceKey>seq</sequenceKey>
+	</appender>
+
+	<root level="info">
+		<appender-ref ref="SPLITTER"/>
+	</root>
+
+</configuration>
+
+
